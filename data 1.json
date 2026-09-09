@@ -1,0 +1,617 @@
+{
+  "subjects": [
+    {
+      "id": "physiotherapie",
+      "title": "Physiotherapie",
+      "image": "",
+      "detail": null,
+      "children": [
+        {
+          "id": "manuelle-therapie",
+          "title": "Manuelle Therapie",
+          "image": "",
+          "detail": null,
+          "children": [
+            {
+              "id": "hws",
+              "title": "Halswirbelsäule",
+              "image": "",
+              "detail": null,
+              "children": [
+                {
+                  "id": "obere-hws",
+                  "title": "Obere Halswirbelsäule",
+                  "image": "",
+                  "detail": null,
+                  "children": [
+                    {
+                      "id": "traktion-sitz",
+                      "title": "Traktion – Tractio (sitzend)",
+                      "image": "",
+                      "children": [],
+                      "detail": {
+                        "media": "",
+                        "regions": [
+                          "region-hws"
+                        ],
+                        "sections": [
+                          {
+                            "heading": "Position Therapeut",
+                            "bullets": [
+                              "Steht seitlich hinter dem Patienten",
+                              "Fixiert Kopf und Nacken"
+                            ]
+                          },
+                          {
+                            "heading": "Position Patient",
+                            "bullets": [
+                              "Aufrechter Sitz",
+                              "Blick geradeaus"
+                            ]
+                          },
+                          {
+                            "heading": "Handanlage",
+                            "bullets": [
+                              "Beide Hände am Occiput",
+                              "Daumen kaudal des Mastoids"
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "id": "flexion-c2",
+                      "title": "Segmentale Flexion C2–C7 – Flexio segmentalis (sitzend)",
+                      "image": "",
+                      "children": [],
+                      "detail": {
+                        "media": "",
+                        "regions": [
+                          "region-hws"
+                        ],
+                        "sections": [
+                          {
+                            "heading": "Position Therapeut",
+                            "bullets": [
+                              "Platzhalter"
+                            ]
+                          },
+                          {
+                            "heading": "Position Patient",
+                            "bullets": [
+                              "Platzhalter"
+                            ]
+                          },
+                          {
+                            "heading": "Handanlage",
+                            "bullets": [
+                              "Platzhalter"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "mittlere-hws",
+                  "title": "Mittlere Halswirbelsäule",
+                  "image": "",
+                  "detail": null,
+                  "children": [
+                    {
+                      "id": "hws-ext",
+                      "title": "Segmentale Extension C2–C7 – Extensio segmentalis (sitzend)",
+                      "image": "",
+                      "children": [],
+                      "detail": {
+                        "media": "",
+                        "regions": [
+                          "region-hws"
+                        ],
+                        "sections": [
+                          {
+                            "heading": "Beschreibung",
+                            "bullets": [
+                              "Platzhalter"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                },
+                {
+                  "id": "cervikothorakal",
+                  "title": "Zervikothorakaler Übergang",
+                  "image": "",
+                  "detail": null,
+                  "children": [
+                    {
+                      "id": "ct-1",
+                      "title": "Beispieltechnik 1",
+                      "image": "",
+                      "children": [],
+                      "detail": {
+                        "media": "",
+                        "regions": [
+                          "region-hws"
+                        ],
+                        "sections": [
+                          {
+                            "heading": "Beschreibung",
+                            "bullets": [
+                              "Platzhalter"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "bws-rippen",
+              "title": "Brustwirbelsäule & Rippen",
+              "image": "",
+              "detail": null,
+              "children": []
+            },
+            {
+              "id": "lws",
+              "title": "Lendenwirbelsäule",
+              "image": "",
+              "detail": null,
+              "children": []
+            },
+            {
+              "id": "sacrum",
+              "title": "Sakrum",
+              "image": "",
+              "detail": null,
+              "children": [
+                {
+                  "id": "nutation-verb",
+                  "title": "Verbesserung Nutation – Nutatio",
+                  "image": "",
+                  "children": [],
+                  "detail": {
+                    "media": [
+                      "videos/nutation.mp4"
+                    ],
+                    "regions": [
+                      "region-becken-isg"
+                    ],
+                    "sections": [
+                      {
+                        "heading": "Was ist Nutation",
+                        "bullets": [
+                          "Kippbewegung des Os sacrum: Sacrumbasis (S1/S2) kippt nach ventral-kaudal, die Spitze (Apex/Steißbein) nach dorsal",
+                          "Physiologische Bewegung u.a. bei Rumpfvorneigung/Flexion der LWS"
+                        ]
+                      },
+                      {
+                        "heading": "Handanlage",
+                        "bullets": [
+                          "Beide Daumen/Finger im Bereich der Sacrumbasis, nahe der SIPS beidseits aufgesetzt",
+                          "Patient in Bauchlage, entspannt"
+                        ]
+                      },
+                      {
+                        "heading": "Ausführung",
+                        "bullets": [
+                          "Sanfter, rhythmischer Druckimpuls auf die Sacrumbasis nach ventral-kaudal, um die Nutationsbewegung zu unterstützen/testen",
+                          "Seitenvergleich: Beweglichkeit und Endgefühl links/rechts vergleichen"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "kontranutation-verb",
+                  "title": "Verbesserung Kontranutation – Contranutatio",
+                  "image": "",
+                  "children": [],
+                  "detail": {
+                    "media": [
+                      "videos/kontranutation.mp4"
+                    ],
+                    "regions": [
+                      "region-becken-isg"
+                    ],
+                    "sections": [
+                      {
+                        "heading": "Was ist Kontranutation",
+                        "bullets": [
+                          "Gegenbewegung zur Nutation: Sacrumbasis (S1/S2) kippt nach dorsal-kranial, die Spitze (Apex/Steißbein) nach ventral",
+                          "Physiologische Bewegung u.a. bei Rumpfaufrichtung/Extension der LWS"
+                        ]
+                      },
+                      {
+                        "heading": "Handanlage",
+                        "bullets": [
+                          "Kontakt beidseits im Bereich der Sacrumbasis bzw. am Übergang zum Os ilium",
+                          "Patient in Bauchlage, entspannt, Becken gut unterstützt"
+                        ]
+                      },
+                      {
+                        "heading": "Ausführung",
+                        "bullets": [
+                          "Sanfter, rhythmischer Druckimpuls auf die Sacrumbasis nach dorsal-kranial, um die Kontranutation zu unterstützen/testen",
+                          "Seitenvergleich: Beweglichkeit und Endgefühl links/rechts vergleichen"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "kontralat-gegennutation-verb",
+                  "title": "Verbesserung kontralaterale Gegennutation – Contranutatio contralateralis",
+                  "image": "",
+                  "children": [],
+                  "detail": {
+                    "media": "",
+                    "regions": [
+                      "region-becken-isg"
+                    ],
+                    "sections": []
+                  }
+                },
+                {
+                  "id": "sacrum-mob-cranial",
+                  "title": "Sacrum Mobilisation nach cranial – Mobilisatio ossis sacri cranialis",
+                  "image": "",
+                  "children": [],
+                  "detail": {
+                    "media": [
+                      "videos/sacrum-mobilisation-cranial.mp4"
+                    ],
+                    "regions": [
+                      "region-becken-isg"
+                    ],
+                    "sections": [
+                      {
+                        "heading": "Was passiert",
+                        "bullets": [
+                          "Mobilisation des Os sacrum nach kranial (kopfwärts) gegenüber dem Becken",
+                          "Patient in Bauchlage, Becken auf der Bank fixiert bzw. abgestützt"
+                        ]
+                      },
+                      {
+                        "heading": "Handanlage",
+                        "bullets": [
+                          "Kontakt-/Zughand auf dem Sacrum (meist im Bereich der Basis bzw. der Spina iliaca posterior superior)",
+                          "Zweite Hand stabilisiert Becken/Bank als Widerlager"
+                        ]
+                      },
+                      {
+                        "heading": "Ausführung",
+                        "bullets": [
+                          "Kontrollierter Druck-/Zug-Impuls nach kranial direkt über das Sacrum",
+                          "Dosierung je nach Ziel: leicht = schmerzlindernd, kräftiger = mobilisierend"
+                        ]
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "traktion-isg",
+                  "title": "Traktion ISG – Tractio articulationis sacroiliacae (Gleiten nach kaudal)",
+                  "image": "",
+                  "children": [],
+                  "detail": {
+                    "media": [
+                      "videos/traktion-isg-1.mp4",
+                      "videos/traktion-isg-2.mp4"
+                    ],
+                    "regions": [
+                      "region-becken-isg"
+                    ],
+                    "sections": [
+                      {
+                        "heading": "Was passiert",
+                        "bullets": [
+                          "Traktion (Tractio) am Iliosakralgelenk (ISG)",
+                          "Kaudales Gleiten: das Os ilium wird gegenüber dem fixierten Os sacrum nach kaudal (fußwärts) gezogen",
+                          "Video 1 und Video 2 zeigen dieselbe Technik/Handanlage aus zwei verschiedenen Kamera-Perspektiven"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "id": "schulter",
+              "title": "Schulterkomplex",
+              "image": "",
+              "detail": null,
+              "children": []
+            },
+            {
+              "id": "ellenbogen",
+              "title": "Ellenbogen",
+              "image": "",
+              "detail": null,
+              "children": []
+            },
+            {
+              "id": "hand",
+              "title": "Handgelenk & Hand",
+              "image": "",
+              "detail": null,
+              "children": [
+                {
+                  "id": "zehnertest-hand",
+                  "title": "10er-Test Handwurzelknochen – Ossa carpi",
+                  "image": "",
+                  "children": [],
+                  "detail": {
+                    "media": "https://youtu.be/ADBW2oyjwLo?is=FaU-ERKyLrfQiE7K",
+                    "regions": [
+                      "region-hand"
+                    ],
+                    "sections": [
+                      {
+                        "heading": "Ziel",
+                        "bullets": [
+                          "Systematisches Benennen und Palpieren aller 8 Handwurzelknochen (Ossa carpi)",
+                          "Wird genutzt, um Tastbefund und Anatomie-Wissen zu prüfen bzw. zu trainieren"
+                        ]
+                      },
+                      {
+                        "heading": "Proximale Reihe (radial → ulnar)",
+                        "bullets": [
+                          "Kahnbein — Os scaphoideum",
+                          "Mondbein — Os lunatum",
+                          "Dreiecksbein — Os triquetrum",
+                          "Erbsenbein — Os pisiforme"
+                        ]
+                      },
+                      {
+                        "heading": "Distale Reihe (radial → ulnar)",
+                        "bullets": [
+                          "Großes Vieleckbein — Os trapezium",
+                          "Kleines Vieleckbein — Os trapezoideum",
+                          "Kopfbein — Os capitatum",
+                          "Hakenbein — Os hamatum"
+                        ]
+                      },
+                      {
+                        "heading": "Palpationshinweis",
+                        "bullets": [
+                          "Kahnbein gut in der Tabatière (Foveola radialis) tastbar",
+                          "Erbsenbein liegt oberflächlich auf dem Triquetrum, gut palpabel an der ulnaren Handgelenksbeugefalte",
+                          "Hakenbein über seinen Hamulus (Hakenfortsatz) an der Hohlhand tastbar"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "id": "huefte",
+              "title": "Hüfte",
+              "image": "",
+              "detail": null,
+              "children": []
+            },
+            {
+              "id": "knie",
+              "title": "Kniegelenk",
+              "image": "",
+              "detail": null,
+              "children": []
+            },
+            {
+              "id": "fuss",
+              "title": "Sprunggelenk & Fuß",
+              "image": "",
+              "detail": null,
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "fbl",
+          "title": "Funktionelle Bewegungslehre (FBL)",
+          "image": "",
+          "detail": null,
+          "children": []
+        },
+        {
+          "id": "fbl-gang",
+          "title": "FBL Gang",
+          "image": "",
+          "detail": null,
+          "children": []
+        },
+        {
+          "id": "bewegungserziehung",
+          "title": "Bewegungserziehung",
+          "image": "",
+          "detail": null,
+          "children": []
+        },
+        {
+          "id": "massage",
+          "title": "Massage",
+          "image": "",
+          "detail": null,
+          "children": []
+        },
+        {
+          "id": "pt-orthopaedie",
+          "title": "PT Orthopädie",
+          "image": "",
+          "detail": null,
+          "children": []
+        },
+        {
+          "id": "pt-chirurgie",
+          "title": "PT Chirurgie",
+          "image": "",
+          "detail": null,
+          "children": []
+        },
+        {
+          "id": "pt-innere-medizin",
+          "title": "PT Innere Medizin",
+          "image": "",
+          "detail": null,
+          "children": []
+        },
+        {
+          "id": "bewegungsbad",
+          "title": "Bewegungsbad",
+          "image": "",
+          "detail": null,
+          "children": []
+        },
+        {
+          "id": "bgm",
+          "title": "BGM",
+          "image": "",
+          "detail": null,
+          "children": []
+        },
+        {
+          "id": "pnf",
+          "title": "PNF",
+          "image": "",
+          "detail": null,
+          "children": []
+        },
+        {
+          "id": "gdl",
+          "title": "GDL",
+          "image": "",
+          "detail": null,
+          "children": []
+        },
+        {
+          "id": "brügger",
+          "title": "Brügger",
+          "image": "",
+          "detail": null,
+          "children": []
+        },
+        {
+          "id": "atemtherapie",
+          "title": "Atemtherapie (AT)",
+          "image": "",
+          "detail": null,
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "schlingentisch",
+      "title": "Schlingentisch",
+      "image": "",
+      "detail": null,
+      "children": [
+        {
+          "id": "einpunkt-huefte-frontal",
+          "title": "1-Punkt-Aufhängung Hüfte – Articulatio coxae",
+          "image": "",
+          "children": [],
+          "detail": {
+            "media": [
+              "videos/schlingentisch-1punkt-huefte.mp4"
+            ],
+            "regions": [
+              "region-huefte"
+            ],
+            "sections": [
+              {
+                "heading": "Aufgabe",
+                "bullets": [
+                  "Einpunktaufhängung für die Hüfte durchführen"
+                ]
+              },
+              {
+                "heading": "Ausrichtung",
+                "bullets": [
+                  "1-Punkt-Aufhängung der Hüfte in der Frontalebene",
+                  "Nur Abduktion und Adduktion möglich"
+                ]
+              },
+              {
+                "heading": "Wichtig",
+                "bullets": [
+                  "Seil muss direkt über dem Drehpunkt fixiert werden"
+                ]
+              },
+              {
+                "heading": "Wirkung auf die Hüfte",
+                "bullets": [
+                  "Kompression, da Zugkraft ventro-kranial = resultierende Kraft"
+                ]
+              },
+              {
+                "heading": "Indikation bei Patienten mit",
+                "bullets": [
+                  "Chronischer Hüftarthrose",
+                  "Allgemeiner Hüftinstabilität",
+                  "Lähmung/Schlaganfall — da Muskeln keinen Tonus haben",
+                  "Kindern",
+                  "Morbus Perthes",
+                  "Hüftkopfnekrose/-veränderung"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "regions": [
+    {
+      "id": "region-kopf-kiefer",
+      "title": "Kopf & Kiefer"
+    },
+    {
+      "id": "region-hws",
+      "title": "Halswirbelsäule (HWS)"
+    },
+    {
+      "id": "region-bws-rippen",
+      "title": "Brustwirbelsäule & Rippen"
+    },
+    {
+      "id": "region-lws",
+      "title": "Lendenwirbelsäule (LWS)"
+    },
+    {
+      "id": "region-becken-isg",
+      "title": "Becken & ISG"
+    },
+    {
+      "id": "region-schulter",
+      "title": "Schulter"
+    },
+    {
+      "id": "region-ellenbogen",
+      "title": "Ellenbogen"
+    },
+    {
+      "id": "region-hand",
+      "title": "Handgelenk & Hand"
+    },
+    {
+      "id": "region-huefte",
+      "title": "Hüfte"
+    },
+    {
+      "id": "region-knie",
+      "title": "Kniegelenk"
+    },
+    {
+      "id": "region-fuss",
+      "title": "Sprunggelenk & Fuß"
+    }
+  ]
+}
