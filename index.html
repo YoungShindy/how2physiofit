@@ -1,0 +1,1905 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Lern-App</title>
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#125a4c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HLX Lern-App">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --header-bg: #e8e6ff;
+    --search-bg: #f2f0ff;
+    --text: #111;
+    --text-muted: #666;
+    --divider: #eaeaea;
+    --chevron: #b8b8b8;
+    --page-bg: #ffffff;
+    --app-bg: #f4f4f6;
+    --max-width: 480px;
+    --radius: 12px;
+    --accent: #6a63e8;
+    --accent-soft: #f2f0ff;
+    --shadow: rgba(0,0,0,.05);
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+            "Helvetica Neue", Arial, sans-serif;
+  }
+
+  html.dark {
+    --header-bg: #23283a;
+    --search-bg: #262b3d;
+    --text: #f0f0f5;
+    --text-muted: #9a9db0;
+    --divider: #333852;
+    --chevron: #676c85;
+    --page-bg: #161925;
+    --app-bg: #0c0e16;
+    --accent: #8a83ff;
+    --accent-soft: #262b45;
+    --shadow: rgba(0,0,0,.4);
+  }
+
+  html, body {
+    background: var(--app-bg);
+    font-family: var(--font);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100%;
+    transition: background .2s ease, color .2s ease;
+  }
+
+  .app {
+    max-width: var(--max-width);
+    margin: 0 auto;
+    background: var(--page-bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 0 24px var(--shadow);
+  }
+
+  /* Header ---------------------------------------------------- */
+  header {
+    background: var(--header-bg);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    min-height: 52px;
+  }
+  header .back {
+    background: none;
+    border: none;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--text);
+    padding: 4px 8px 4px 0;
+    visibility: hidden;
+  }
+  header .back.visible { visibility: visible; }
+  header h1 {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  header .edit-toggle {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: var(--text);
+    padding: 4px 6px;
+    border-radius: 6px;
+  }
+  header .edit-toggle.active {
+    color: var(--accent);
+    background: rgba(255,255,255,.5);
+  }
+
+  /* Tabs (Startseite) ------------------------------------------ */
+  .tabs { display: flex; gap: 8px; padding: 12px 16px 0; }
+  .tabs.hidden { display: none; }
+  .tab-btn {
+    flex: 1;
+    background: var(--search-bg);
+    border: none;
+    padding: 11px 10px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #8a86a8;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .tab-btn.active { background: var(--accent); color: #fff; }
+
+  /* Suchleiste ------------------------------------------------ */
+  .search-wrap { padding: 14px 16px 4px; }
+  .search {
+    width: 100%;
+    background: var(--search-bg);
+    border: none;
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text);
+    outline: none;
+  }
+  .search::placeholder { color: #8a86a8; }
+
+  /* Content-Container ---------------------------------------- */
+  main {
+    flex: 1;
+    padding: 16px;
+    padding-bottom: 90px;
+  }
+
+  /* GRID-Ansicht (Kacheln mit Bild + Titel) ------------------ */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px 12px;
+  }
+  .card-wrap { display: flex; flex-direction: column; align-items: center; }
+  .grid .card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: inherit;
+    padding: 4px;
+    width: 100%;
+  }
+  .grid .card:active { transform: scale(.97); }
+  .grid .thumb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: var(--search-bg);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+  .grid .thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .grid .thumb.placeholder {
+    background: linear-gradient(135deg, #f2f0ff, #e8e6ff);
+    color: var(--accent);
+    font-size: 28px;
+    font-weight: 300;
+  }
+  .grid .label {
+    font-size: 13px;
+    line-height: 1.25;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .grid-actions { justify-content: center; padding-top: 2px; }
+
+  /* LISTEN-Ansicht (Reihen mit Chevron) --------------------- */
+  .list {
+    display: flex;
+    flex-direction: column;
+  }
+  .row-wrap { display: flex; flex-direction: column; }
+  .list .row {
+    display: flex;
+    align-items: center;
+    padding: 18px 4px;
+    border-bottom: 1px solid var(--divider);
+    cursor: pointer;
+    background: none;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+  }
+  .row-wrap:first-child .row { border-top: 1px solid var(--divider); }
+  .list .row .row-title {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.3;
+    padding-right: 12px;
+  }
+  .list .row .row-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    padding-right: 12px;
+  }
+  .list .row .row-main .row-title { padding-right: 0; }
+  .row-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .list .row .chevron {
+    color: var(--chevron);
+    font-size: 18px;
+  }
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-left: 6px;
+  }
+
+  /* Bearbeiten-Icons ------------------------------------------ */
+  .row-actions {
+    display: flex;
+    gap: 8px;
+    padding: 2px 4px 10px;
+  }
+  .icon-btn {
+    background: var(--accent-soft);
+    border: none;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--accent);
+  }
+
+  /* Backup-Leiste ---------------------------------------------- */
+  .backup-bar { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+
+  /* Floating Add Button ----------------------------------------- */
+  .fab {
+    position: absolute;
+    right: 18px;
+    bottom: 24px;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    font-size: 28px;
+    line-height: 1;
+    border: none;
+    box-shadow: 0 4px 14px rgba(106,99,232,.4);
+    cursor: pointer;
+    z-index: 6;
+  }
+  .fab.hidden { display: none; }
+
+  /* DETAIL-Ansicht ------------------------------------------ */
+  .detail .detail-header {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  .detail .detail-header:empty { margin-bottom: 0; }
+  .detail h2 {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 16px;
+  }
+  .media-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .detail .media {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: var(--accent-soft);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    position: relative;
+  }
+  .detail .media img,
+  .detail .media video,
+  .detail .media iframe {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border: 0;
+  }
+  .detail section { margin-bottom: 18px; }
+  .detail section h3 {
+    font-size: 16px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .detail section p { font-size: 15px; line-height: 1.5; margin-bottom: 8px; }
+  .detail section ul { padding-left: 20px; }
+  .detail section li {
+    font-size: 15px;
+    line-height: 1.5;
+    margin-bottom: 6px;
+  }
+
+  /* Leerer Zustand ------------------------------------------- */
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+  .empty-hint { color: var(--text-muted); font-size: 13px; }
+
+  /* Feiner Fade beim Navigieren ------------------------------ */
+  main { animation: fadeIn .18s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  /* Modal ------------------------------------------------------ */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.45);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 50;
+    padding: 0;
+  }
+  .modal-overlay.hidden { display: none; }
+  .modal {
+    background: var(--page-bg);
+    width: 100%;
+    max-width: var(--max-width);
+    max-height: 88vh;
+    overflow-y: auto;
+    border-radius: 16px 16px 0 0;
+    padding: 22px 18px 26px;
+  }
+  .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 12px; }
+  .field-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    color: var(--text-muted);
+    margin: 16px 0 6px;
+  }
+  .modal-input {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--search-bg);
+  }
+  textarea.modal-input { resize: vertical; }
+  .radio-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .radio-group input { margin-right: 6px; }
+  .media-field { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .btn-secondary {
+    background: var(--accent-soft);
+    border: none;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--accent);
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 11px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 22px;
+  }
+  .media-preview {
+    max-width: 100%;
+    max-height: 180px;
+    border-radius: 8px;
+    margin-top: 8px;
+    display: block;
+  }
+  .media-preview-frame {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 0;
+    border-radius: 8px;
+    margin-top: 8px;
+    display: block;
+  }
+  .media-url-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .media-url-row .modal-input { flex: 1; }
+  .media-item-edit {
+    border: 1px solid var(--divider);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  .media-item-edit .remove-media-btn { margin-top: 6px; width: 100%; }
+  .section-block {
+    border: 1px solid var(--divider);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .section-block .modal-input { margin-bottom: 8px; }
+  #entryFields.hidden { display: none; }
+
+  /* Gebiete-Auswahl im Modal ------------------------------------ */
+  .region-checks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .region-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-soft);
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .region-check input { margin: 0; }
+
+  /* Streak-Toast --------------------------------------------- */
+  .toast {
+    position: absolute;
+    top: 58px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-8px);
+    background: var(--accent);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    z-index: 40;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease, transform .25s ease;
+    max-width: 88%;
+    text-align: center;
+  }
+  .toast.hidden { display: none; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* Favoriten-Stern -------------------------------------------- */
+  .fav-btn { font-size: 18px; }
+  .fav-btn.active { color: #e0a800; background: #fff3cd; }
+
+  /* Login-Screen ------------------------------------------------ */
+  .login-overlay {
+    position: fixed;
+    inset: 0;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+  }
+  .login-overlay.hidden { display: none; }
+  .login-box {
+    background: var(--page-bg);
+    border-radius: 16px;
+    padding: 30px 22px;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+  }
+  .login-box h2 { font-size: 18px; font-weight: 800; margin-bottom: 6px; }
+  .login-box p { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+  .login-error {
+    color: #d33;
+    font-size: 13px;
+    margin-top: 10px;
+    min-height: 18px;
+  }
+</style>
+</head>
+<body>
+
+<div class="login-overlay hidden" id="loginOverlay">
+  <div class="login-box">
+    <h2>Physiotherapie Lern-App</h2>
+    <p>Bitte Passwort eingeben</p>
+    <input type="password" id="loginPasswordInput" class="modal-input" placeholder="Passwort" autocomplete="off">
+    <div class="login-error" id="loginError"></div>
+    <button type="button" class="btn-primary" id="loginSubmitBtn" style="margin-top:14px; width:100%;">Weiter</button>
+  </div>
+</div>
+
+<div class="app">
+  <header>
+    <button class="back" id="backBtn" aria-label="Zurück">&#x2039;</button>
+    <h1 id="pageTitle">Titel</h1>
+    <button class="edit-toggle" id="editToggleBtn" aria-label="Bearbeiten">&#9998;</button>
+    <button class="edit-toggle" id="logoutBtn" aria-label="Abmelden" title="Abmelden / Rolle wechseln">&#9099;</button>
+    <button class="edit-toggle" id="settingsBtn" aria-label="Einstellungen" title="Einstellungen">&#9881;</button>
+    <button class="edit-toggle" id="randomBtn" aria-label="Zufälliger Eintrag" title="Zufälliger Eintrag">🎲</button>
+  </header>
+
+  <div class="toast hidden" id="streakToast"></div>
+
+  <div class="tabs" id="tabsWrap">
+    <button class="tab-btn" id="tabSubjectsBtn">Meine Fächer</button>
+    <button class="tab-btn" id="tabRegionsBtn">Nach Gebiet</button>
+    <button class="tab-btn" id="tabFavoritesBtn">Favoriten</button>
+  </div>
+
+  <div class="search-wrap">
+    <input class="search" id="searchInput" type="text" placeholder="Suche…" />
+  </div>
+
+  <main id="main"></main>
+
+  <button class="fab hidden" id="fabAdd" aria-label="Hinzufügen">+</button>
+</div>
+
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<div class="modal-overlay hidden" id="settingsOverlay">
+  <div class="modal" id="settingsBox">
+    <h3 class="modal-title">Einstellungen</h3>
+    <label class="field-label">Design</label>
+    <div class="radio-group">
+      <label><input type="radio" name="themeChoice" value="light"> Hell</label>
+      <label><input type="radio" name="themeChoice" value="dark"> Dunkel</label>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="btn-primary" id="settingsCloseBtn">Fertig</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="image/*,video/*" style="display:none">
+
+<script>
+/* ============================================================
+   DATENMODELL
+   appData = { subjects: [...Knoten], regions: [{id,title}, ...] }
+   Jeder Knoten: { id, title, image, children: [], detail: null|{media, sections, regions} }
+   - Hat er `detail`, ist er ein Eintrag mit Inhalt (Blatt). `detail.regions`
+     ist ein Array von Gebiet-IDs, über die der Eintrag auch fachübergreifend
+     in der "Nach Gebiet"-Ansicht auffindbar ist.
+   - Sonst ist er ein Ordner, `children` enthält weitere Knoten.
+   Alles wird automatisch alphabetisch sortiert angezeigt.
+   Gespeichert wird im Browser (localStorage) unter STORAGE_KEY.
+   ============================================================ */
+
+const STORAGE_KEY = 'lernapp_data_v3';
+
+function seedRegions(){
+  return [
+    { id: 'region-kopf-kiefer', title: 'Kopf & Kiefer' },
+    { id: 'region-hws', title: 'Halswirbelsäule (HWS)' },
+    { id: 'region-bws-rippen', title: 'Brustwirbelsäule & Rippen' },
+    { id: 'region-lws', title: 'Lendenwirbelsäule (LWS)' },
+    { id: 'region-becken-isg', title: 'Becken & ISG' },
+    { id: 'region-schulter', title: 'Schulter' },
+    { id: 'region-ellenbogen', title: 'Ellenbogen' },
+    { id: 'region-hand', title: 'Handgelenk & Hand' },
+    { id: 'region-huefte', title: 'Hüfte' },
+    { id: 'region-knie', title: 'Kniegelenk' },
+    { id: 'region-fuss', title: 'Sprunggelenk & Fuß' }
+  ];
+}
+
+const seedSubjectPhysio = {
+  id: 'physiotherapie', title: 'Physiotherapie', image: '', detail: null, children: [
+    { id:'manuelle-therapie', title:'Manuelle Therapie', image:'', detail:null, children:[
+      { id:'hws', title:'Halswirbelsäule', image:'', detail:null, children:[
+        { id:'obere-hws', title:'Obere Halswirbelsäule', image:'', detail:null, children:[
+          { id:'traktion-sitz', title:'Traktion – Tractio (sitzend)', image:'', children:[], detail:{ media:'', regions:['region-hws'], sections:[
+            {heading:'Position Therapeut', bullets:['Steht seitlich hinter dem Patienten','Fixiert Kopf und Nacken']},
+            {heading:'Position Patient', bullets:['Aufrechter Sitz','Blick geradeaus']},
+            {heading:'Handanlage', bullets:['Beide Hände am Occiput','Daumen kaudal des Mastoids']}
+          ]}},
+          { id:'flexion-c2', title:'Segmentale Flexion C2–C7 – Flexio segmentalis (sitzend)', image:'', children:[], detail:{media:'', regions:['region-hws'], sections:[
+            {heading:'Position Therapeut', bullets:['Platzhalter']},
+            {heading:'Position Patient', bullets:['Platzhalter']},
+            {heading:'Handanlage', bullets:['Platzhalter']}
+          ]}}
+        ]},
+        { id:'mittlere-hws', title:'Mittlere Halswirbelsäule', image:'', detail:null, children:[
+          { id:'hws-ext', title:'Segmentale Extension C2–C7 – Extensio segmentalis (sitzend)', image:'', children:[], detail:{media:'', regions:['region-hws'], sections:[{heading:'Beschreibung', bullets:['Platzhalter']}]}}
+        ]},
+        { id:'cervikothorakal', title:'Zervikothorakaler Übergang', image:'', detail:null, children:[
+          { id:'ct-1', title:'Beispieltechnik 1', image:'', children:[], detail:{media:'', regions:['region-hws'], sections:[{heading:'Beschreibung', bullets:['Platzhalter']}]}}
+        ]}
+      ]},
+      { id:'bws-rippen', title:'Brustwirbelsäule & Rippen', image:'', detail:null, children:[] },
+      { id:'lws', title:'Lendenwirbelsäule', image:'', detail:null, children:[] },
+      { id:'sacrum', title:'Sakrum', image:'', detail:null, children:[
+        { id:'nutation-verb', title:'Verbesserung Nutation – Nutatio', image:'', children:[], detail:{ media:['videos/nutation.mp4'], regions:['region-becken-isg'], sections:[
+          { heading:'Was ist Nutation', bullets:[
+            'Kippbewegung des Os sacrum: Sacrumbasis (S1/S2) kippt nach ventral-kaudal, die Spitze (Apex/Steißbein) nach dorsal',
+            'Physiologische Bewegung u.a. bei Rumpfvorneigung/Flexion der LWS'
+          ]},
+          { heading:'Handanlage', bullets:[
+            'Beide Daumen/Finger im Bereich der Sacrumbasis, nahe der SIPS beidseits aufgesetzt',
+            'Patient in Bauchlage, entspannt'
+          ]},
+          { heading:'Ausführung', bullets:[
+            'Sanfter, rhythmischer Druckimpuls auf die Sacrumbasis nach ventral-kaudal, um die Nutationsbewegung zu unterstützen/testen',
+            'Seitenvergleich: Beweglichkeit und Endgefühl links/rechts vergleichen'
+          ]}
+        ] } },
+        { id:'kontranutation-verb', title:'Verbesserung Kontranutation – Contranutatio', image:'', children:[], detail:{ media:['videos/kontranutation.mp4'], regions:['region-becken-isg'], sections:[
+          { heading:'Was ist Kontranutation', bullets:[
+            'Gegenbewegung zur Nutation: Sacrumbasis (S1/S2) kippt nach dorsal-kranial, die Spitze (Apex/Steißbein) nach ventral',
+            'Physiologische Bewegung u.a. bei Rumpfaufrichtung/Extension der LWS'
+          ]},
+          { heading:'Handanlage', bullets:[
+            'Kontakt beidseits im Bereich der Sacrumbasis bzw. am Übergang zum Os ilium',
+            'Patient in Bauchlage, entspannt, Becken gut unterstützt'
+          ]},
+          { heading:'Ausführung', bullets:[
+            'Sanfter, rhythmischer Druckimpuls auf die Sacrumbasis nach dorsal-kranial, um die Kontranutation zu unterstützen/testen',
+            'Seitenvergleich: Beweglichkeit und Endgefühl links/rechts vergleichen'
+          ]}
+        ] } },
+        { id:'kontralat-gegennutation-verb', title:'Verbesserung kontralaterale Gegennutation – Contranutatio contralateralis', image:'', children:[], detail:{ media:'', regions:['region-becken-isg'], sections:[] } },
+        { id:'sacrum-mob-cranial', title:'Sacrum Mobilisation nach cranial – Mobilisatio ossis sacri cranialis', image:'', children:[], detail:{ media:['videos/sacrum-mobilisation-cranial.mp4'], regions:['region-becken-isg'], sections:[
+          { heading:'Was passiert', bullets:[
+            'Mobilisation des Os sacrum nach kranial (kopfwärts) gegenüber dem Becken',
+            'Patient in Bauchlage, Becken auf der Bank fixiert bzw. abgestützt'
+          ]},
+          { heading:'Handanlage', bullets:[
+            'Kontakt-/Zughand auf dem Sacrum (meist im Bereich der Basis bzw. der Spina iliaca posterior superior)',
+            'Zweite Hand stabilisiert Becken/Bank als Widerlager'
+          ]},
+          { heading:'Ausführung', bullets:[
+            'Kontrollierter Druck-/Zug-Impuls nach kranial direkt über das Sacrum',
+            'Dosierung je nach Ziel: leicht = schmerzlindernd, kräftiger = mobilisierend'
+          ]}
+        ] } },
+        { id:'traktion-isg', title:'Traktion ISG – Tractio articulationis sacroiliacae (Gleiten nach kaudal)', image:'', children:[], detail:{ media:['videos/traktion-isg-1.mp4','videos/traktion-isg-2.mp4'], regions:['region-becken-isg'], sections:[
+          { heading:'Was passiert', bullets:[
+            'Traktion (Tractio) am Iliosakralgelenk (ISG)',
+            'Kaudales Gleiten: das Os ilium wird gegenüber dem fixierten Os sacrum nach kaudal (fußwärts) gezogen',
+            'Video 1 und Video 2 zeigen dieselbe Technik/Handanlage aus zwei verschiedenen Kamera-Perspektiven'
+          ]}
+        ] } }
+      ] },
+      { id:'schulter', title:'Schulterkomplex', image:'', detail:null, children:[] },
+      { id:'ellenbogen', title:'Ellenbogen', image:'', detail:null, children:[] },
+      { id:'hand', title:'Handgelenk & Hand', image:'', detail:null, children:[
+        { id:'zehnertest-hand', title:'10er-Test Handwurzelknochen – Ossa carpi', image:'', children:[], detail:{ media:'https://youtu.be/ADBW2oyjwLo?is=FaU-ERKyLrfQiE7K', regions:['region-hand'], sections:[
+          { heading:'Ziel', bullets:[
+            'Systematisches Benennen und Palpieren aller 8 Handwurzelknochen (Ossa carpi)',
+            'Wird genutzt, um Tastbefund und Anatomie-Wissen zu prüfen bzw. zu trainieren'
+          ]},
+          { heading:'Proximale Reihe (radial → ulnar)', bullets:[
+            'Kahnbein — Os scaphoideum',
+            'Mondbein — Os lunatum',
+            'Dreiecksbein — Os triquetrum',
+            'Erbsenbein — Os pisiforme'
+          ]},
+          { heading:'Distale Reihe (radial → ulnar)', bullets:[
+            'Großes Vieleckbein — Os trapezium',
+            'Kleines Vieleckbein — Os trapezoideum',
+            'Kopfbein — Os capitatum',
+            'Hakenbein — Os hamatum'
+          ]},
+          { heading:'Palpationshinweis', bullets:[
+            'Kahnbein gut in der Tabatière (Foveola radialis) tastbar',
+            'Erbsenbein liegt oberflächlich auf dem Triquetrum, gut palpabel an der ulnaren Handgelenksbeugefalte',
+            'Hakenbein über seinen Hamulus (Hakenfortsatz) an der Hohlhand tastbar'
+          ]}
+        ]}}
+      ] },
+      { id:'huefte', title:'Hüfte', image:'', detail:null, children:[] },
+      { id:'knie', title:'Kniegelenk', image:'', detail:null, children:[] },
+      { id:'fuss', title:'Sprunggelenk & Fuß', image:'', detail:null, children:[] }
+    ]},
+    { id:'fbl', title:'Funktionelle Bewegungslehre (FBL)', image:'', detail:null, children:[] },
+    { id:'fbl-gang', title:'FBL Gang', image:'', detail:null, children:[] },
+    { id:'bewegungserziehung', title:'Bewegungserziehung', image:'', detail:null, children:[] },
+    { id:'massage', title:'Massage', image:'', detail:null, children:[] },
+    { id:'pt-orthopaedie', title:'PT Orthopädie', image:'', detail:null, children:[] },
+    { id:'pt-chirurgie', title:'PT Chirurgie', image:'', detail:null, children:[] },
+    { id:'pt-innere-medizin', title:'PT Innere Medizin', image:'', detail:null, children:[] },
+    { id:'bewegungsbad', title:'Bewegungsbad', image:'', detail:null, children:[] },
+    { id:'bgm', title:'BGM', image:'', detail:null, children:[] },
+    { id:'pnf', title:'PNF', image:'', detail:null, children:[] },
+    { id:'gdl', title:'GDL', image:'', detail:null, children:[] },
+    { id:'brügger', title:'Brügger', image:'', detail:null, children:[] },
+    { id:'atemtherapie', title:'Atemtherapie (AT)', image:'', detail:null, children:[] }
+  ]
+};
+
+const DATA_URL = 'data.json';
+
+function seedData(){
+  return { subjects: [seedSubjectPhysio], regions: seedRegions() };
+}
+
+function loadLocalData(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { console.warn('Konnte gespeicherte Daten nicht laden', e); }
+  return null;
+}
+
+function normalizeData(data){
+  if (!data) data = seedData();
+  if (!data.subjects) data.subjects = [seedSubjectPhysio];
+  if (!data.regions) data.regions = seedRegions();
+  return data;
+}
+
+async function loadData(){
+  // 1. Versuch: veröffentlichte data.json (die "offizielle" gemeinsame Version)
+  try {
+    const res = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
+    if (res.ok) {
+      const published = await res.json();
+      if (published && published.subjects) return normalizeData(published);
+    }
+  } catch (e) {
+    // data.json fehlt (noch) oder nicht erreichbar (z.B. lokal geöffnet) — das ist okay
+  }
+  // 2. Rückfall: lokal gespeicherter Stand (z.B. während des Bearbeitens)
+  const local = loadLocalData();
+  if (local) return normalizeData(local);
+  // 3. Letzter Rückfall: eingebaute Startbelegung
+  return normalizeData(null);
+}
+
+let appData = null;
+
+function saveData(){
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+  } catch(e){
+    alert('Speichern fehlgeschlagen — der Browser-Speicher ist evtl. voll (große Videos brauchen viel Platz). Nutze kleinere Dateien oder exportiere regelmäßig ein Backup.');
+  }
+}
+
+const rootNode = {
+  id: '__root__',
+  title: 'Meine Fächer',
+  isRoot: true,
+  detail: null,
+  get children(){ return appData.subjects; },
+  set children(v){ appData.subjects = v; }
+};
+
+const state = { mode: 'subjects', path: [] };
+
+/* ================= Favoriten ================= */
+
+const FAVORITES_KEY = 'lernapp_favorites_v1';
+let favorites = [];
+
+function loadFavorites(){
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch (e) { /* ignore */ }
+  return [];
+}
+function saveFavorites(){
+  try { localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites)); } catch (e) { /* ignore */ }
+}
+function isFavorite(id){ return favorites.includes(id); }
+function toggleFavorite(id){
+  favorites = isFavorite(id) ? favorites.filter(f => f !== id) : favorites.concat(id);
+  saveFavorites();
+}
+function collectFavoriteEntries(){
+  const results = [];
+  function walk(node, trailTitles){
+    (node.children || []).forEach(child => {
+      if (child.detail) {
+        if (isFavorite(child.id)) results.push({ node: child, breadcrumb: trailTitles.join(' › ') });
+      } else {
+        walk(child, trailTitles.concat(child.title));
+      }
+    });
+  }
+  walk(rootNode, []);
+  return results.sort((a,b)=>a.node.title.localeCompare(b.node.title,'de',{sensitivity:'base'}));
+}
+function collectAllEntries(){
+  const results = [];
+  function walk(node){
+    (node.children || []).forEach(child => {
+      if (child.detail) results.push(child);
+      else walk(child);
+    });
+  }
+  walk(rootNode);
+  return results;
+}
+
+let editMode = false;
+
+function currentNode(){
+  return state.path.length === 0 ? rootNode : state.path[state.path.length - 1];
+}
+function open(node){
+  state.path.push(node);
+  document.getElementById('searchInput').value = '';
+  render();
+}
+function back(){
+  state.path.pop();
+  document.getElementById('searchInput').value = '';
+  render();
+}
+function sortedChildren(node){
+  return [...(node.children||[])].sort((a,b)=>a.title.localeCompare(b.title,'de',{sensitivity:'base'}));
+}
+function sortedRegions(){
+  return [...appData.regions].sort((a,b)=>a.title.localeCompare(b.title,'de',{sensitivity:'base'}));
+}
+function genId(){ return 'n_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function getYouTubeEmbedId(url){
+  if (!url || typeof url !== 'string') return null;
+  try {
+    const u = new URL(url);
+    if (u.hostname === 'youtu.be') {
+      return u.pathname.slice(1).split('/')[0] || null;
+    }
+    if (u.hostname.includes('youtube.com')) {
+      if (u.pathname === '/watch') return u.searchParams.get('v');
+      if (u.pathname.startsWith('/embed/')) return u.pathname.split('/embed/')[1];
+      if (u.pathname.startsWith('/shorts/')) return u.pathname.split('/shorts/')[1];
+    }
+  } catch (e) { /* keine gültige URL */ }
+  return null;
+}
+function findChild(node, id){ return (node.children||[]).find(c=>c.id===id); }
+
+function findParentOf(targetNode, container){
+  container = container || rootNode;
+  const kids = container.children || [];
+  for (const k of kids) {
+    if (k.id === targetNode.id) return container;
+    if (!k.detail) {
+      const found = findParentOf(targetNode, k);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function collectEntriesByRegion(regionId){
+  const results = [];
+  function walk(node, trailTitles){
+    (node.children || []).forEach(child => {
+      if (child.detail) {
+        if (child.detail.regions && child.detail.regions.includes(regionId)) {
+          results.push({ node: child, breadcrumb: trailTitles.join(' › ') });
+        }
+      } else {
+        walk(child, trailTitles.concat(child.title));
+      }
+    });
+  }
+  walk(rootNode, []);
+  return results.sort((a,b)=>a.node.title.localeCompare(b.node.title,'de',{sensitivity:'base'}));
+}
+
+// Render eines Grids (Kacheln) — für Fächer- und Gebiete-Startseite
+function renderGrid(nodes, filter){
+  const filtered = filter ? nodes.filter(n => n.title.toLowerCase().includes(filter)) : nodes;
+  if (filtered.length === 0) {
+    return `<div class="empty">Keine Einträge${filter ? ' gefunden' : ' vorhanden'}.</div>`;
+  }
+  return `<div class="grid">${
+    filtered.map(n => `
+      <div class="card-wrap">
+        <button class="card" data-id="${escapeAttr(n.id)}">
+          <div class="thumb ${n.image ? '' : 'placeholder'}">
+            ${n.image ? `<img src="${escapeAttr(n.image)}" alt="">` : `<span>+</span>`}
+          </div>
+          <div class="label">${escapeHtml(n.title)}</div>
+        </button>
+        ${editMode ? `
+          <div class="row-actions grid-actions">
+            <button class="icon-btn edit-btn" data-id="${escapeAttr(n.id)}" aria-label="Bearbeiten">&#9998;</button>
+            <button class="icon-btn delete-btn" data-id="${escapeAttr(n.id)}" aria-label="Löschen">&#128465;</button>
+          </div>` : ''}
+      </div>
+    `).join('')
+  }</div>`;
+}
+
+// Render einer Liste (Zeilen mit Chevron) — für alles innerhalb eines Fachs
+function renderList(nodes, filter){
+  const filtered = filter ? nodes.filter(n => n.title.toLowerCase().includes(filter)) : nodes;
+  if (filtered.length === 0) {
+    return `<div class="empty">Keine Einträge${filter ? ' gefunden' : ' vorhanden'}.</div>`;
+  }
+  return `<div class="list">${
+    filtered.map(n => `
+      <div class="row-wrap">
+        <button class="row" data-id="${escapeAttr(n.id)}">
+          <span class="row-title">${escapeHtml(n.title)}${n.detail ? ' <span class="tag">Eintrag</span>' : ''}</span>
+          <span class="chevron">&#x203A;</span>
+        </button>
+        ${editMode ? `
+          <div class="row-actions">
+            <button class="icon-btn edit-btn" data-id="${escapeAttr(n.id)}" aria-label="Bearbeiten">&#9998;</button>
+            <button class="icon-btn delete-btn" data-id="${escapeAttr(n.id)}" aria-label="Löschen">&#128465;</button>
+          </div>` : ''}
+      </div>
+    `).join('')
+  }</div>`;
+}
+
+// Render der fachübergreifenden Ergebnisliste eines Gebiets
+function renderRegionEntryList(entries, filter, emptyHint){
+  const filtered = filter
+    ? entries.filter(e => e.node.title.toLowerCase().includes(filter) || e.breadcrumb.toLowerCase().includes(filter))
+    : entries;
+  if (filtered.length === 0) {
+    return `<div class="empty">Keine Einträge${filter ? ' gefunden' : ' ' + (emptyHint || 'vorhanden')}.</div>`;
+  }
+  return `<div class="list">${
+    filtered.map(e => `
+      <div class="row-wrap">
+        <button class="row" data-id="${escapeAttr(e.node.id)}">
+          <span class="row-main">
+            <span class="row-title">${escapeHtml(e.node.title)}</span>
+            ${e.breadcrumb ? `<span class="row-sub">${escapeHtml(e.breadcrumb)}</span>` : ''}
+          </span>
+          <span class="chevron">&#x203A;</span>
+        </button>
+        ${editMode ? `
+          <div class="row-actions">
+            <button class="icon-btn edit-btn" data-id="${escapeAttr(e.node.id)}" aria-label="Bearbeiten">&#9998;</button>
+            <button class="icon-btn delete-btn" data-id="${escapeAttr(e.node.id)}" aria-label="Löschen">&#128465;</button>
+          </div>` : ''}
+      </div>
+    `).join('')
+  }</div>`;
+}
+
+// Render einer Detailseite
+function normalizeMediaList(media){
+  if (!media) return [];
+  if (Array.isArray(media)) return media.filter(Boolean);
+  return [media]; // altes Format: einzelner String
+}
+
+function renderMediaItem(src){
+  const ytId = getYouTubeEmbedId(src);
+  const isVideo = !ytId && (src.startsWith('data:video') || /\.(mp4|webm|mov)$/i.test(src));
+  return `
+    <div class="media">
+      ${ytId
+        ? `<iframe src="https://www.youtube-nocookie.com/embed/${escapeAttr(ytId)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
+        : (isVideo
+            ? `<video src="${src}" controls playsinline></video>`
+            : `<img src="${src}" alt="">`)
+      }
+    </div>
+  `;
+}
+
+function renderDetail(node){
+  const d = node.detail || {};
+  const mediaList = normalizeMediaList(d.media);
+  const sections = d.sections || [];
+
+  return `
+    <div class="detail">
+      <div class="detail-header">
+        <button class="icon-btn fav-btn${isFavorite(node.id) ? ' active' : ''}" id="favToggleBtn" aria-label="Favorit">${isFavorite(node.id) ? '&#9733;' : '&#9734;'}</button>
+        ${editMode ? `
+          <button class="icon-btn" id="detailEditBtn" aria-label="Bearbeiten">&#9998;</button>
+          <button class="icon-btn" id="detailDeleteBtn" aria-label="Löschen">&#128465;</button>
+        ` : ''}
+      </div>
+      <h2>${escapeHtml(node.title)}</h2>
+      <div class="media-list">
+        ${mediaList.length > 0
+          ? mediaList.map(renderMediaItem).join('')
+          : `<div class="media"><span>Kein Medium hinterlegt</span></div>`
+        }
+      </div>
+      ${sections.map(s => `
+        <section>
+          <h3>${escapeHtml(s.heading || '')}</h3>
+          ${s.text ? `<p>${escapeHtml(s.text)}</p>` : ''}
+          ${(s.bullets && s.bullets.length)
+            ? `<ul>${s.bullets.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>`
+            : ''}
+        </section>
+      `).join('')}
+      ${sections.length === 0 ? '<div class="empty">Noch keine Inhalte hinterlegt.</div>' : ''}
+    </div>
+  `;
+}
+
+// Haupt-Render
+function render(){
+  const backBtn = document.getElementById('backBtn');
+  const search = document.getElementById('searchInput');
+  const main = document.getElementById('main');
+  const tabsWrap = document.getElementById('tabsWrap');
+  const filter = (search.value || '').trim().toLowerCase();
+
+  main.style.animation = 'none';
+  main.offsetHeight;
+  main.style.animation = '';
+
+  const atTopLevel = state.path.length === 0;
+  tabsWrap.classList.toggle('hidden', !atTopLevel);
+  if (atTopLevel) {
+    document.getElementById('tabSubjectsBtn').classList.toggle('active', state.mode === 'subjects');
+    document.getElementById('tabRegionsBtn').classList.toggle('active', state.mode === 'regions');
+    document.getElementById('tabFavoritesBtn').classList.toggle('active', state.mode === 'favorites');
+  }
+
+  backBtn.classList.toggle('visible', state.path.length > 0);
+
+  if (state.mode === 'regions') {
+    renderRegionsMode(filter);
+  } else if (state.mode === 'favorites') {
+    renderFavoritesMode(filter);
+  } else {
+    renderSubjectsMode(filter);
+  }
+}
+
+function renderSubjectsMode(filter){
+  const node = currentNode();
+  const title = document.getElementById('pageTitle');
+  const fab = document.getElementById('fabAdd');
+  const main = document.getElementById('main');
+
+  title.textContent = node.title || '';
+
+  const isLeaf = !!node.detail;
+
+  if (isLeaf) {
+    document.querySelector('.search-wrap').style.display = 'none';
+    main.innerHTML = renderDetail(node);
+    fab.classList.add('hidden');
+    bindDetailActions(node);
+    return;
+  }
+
+  document.querySelector('.search-wrap').style.display = '';
+
+  if (node.isRoot) {
+    const backupBar = editMode ? `
+      <div class="backup-bar">
+        <button class="btn-primary" id="shareBackupBtn">Backup senden</button>
+        <button class="btn-secondary" id="exportBtn">Backup exportieren</button>
+        <button class="btn-secondary" id="importBtn">Backup importieren</button>
+      </div>` : '';
+    main.innerHTML = backupBar + renderGrid(sortedChildren(node), filter);
+    if (editMode) {
+      document.getElementById('shareBackupBtn').addEventListener('click', shareBackup);
+      document.getElementById('exportBtn').addEventListener('click', exportBackup);
+      document.getElementById('importBtn').addEventListener('click', importBackup);
+    }
+  } else {
+    main.innerHTML = renderList(sortedChildren(node), filter);
+  }
+  bindRowActions(node);
+  fab.classList.toggle('hidden', !editMode);
+}
+
+function renderRegionsMode(filter){
+  const title = document.getElementById('pageTitle');
+  const fab = document.getElementById('fabAdd');
+  const main = document.getElementById('main');
+
+  if (state.path.length === 0) {
+    title.textContent = 'Nach Gebiet';
+    document.querySelector('.search-wrap').style.display = '';
+    main.innerHTML = renderGrid(sortedRegions(), filter);
+    bindRegionsGridActions();
+    fab.classList.toggle('hidden', !editMode);
+  } else if (state.path.length === 1) {
+    const region = state.path[0];
+    title.textContent = region.title;
+    document.querySelector('.search-wrap').style.display = '';
+    const entries = collectEntriesByRegion(region.id);
+    main.innerHTML = renderRegionEntryList(entries, filter, 'für dieses Gebiet vorhanden');
+    bindRegionEntryActions(entries);
+    fab.classList.add('hidden');
+  } else {
+    const node = state.path[1];
+    title.textContent = node.title;
+    document.querySelector('.search-wrap').style.display = 'none';
+    main.innerHTML = renderDetail(node);
+    fab.classList.add('hidden');
+    bindDetailActions(node);
+  }
+}
+
+function renderFavoritesMode(filter){
+  const title = document.getElementById('pageTitle');
+  const fab = document.getElementById('fabAdd');
+  const main = document.getElementById('main');
+
+  fab.classList.add('hidden');
+
+  if (state.path.length === 0) {
+    title.textContent = 'Favoriten';
+    document.querySelector('.search-wrap').style.display = '';
+    const entries = collectFavoriteEntries();
+    main.innerHTML = renderRegionEntryList(entries, filter, 'als Favorit markiert');
+    bindRegionEntryActions(entries);
+  } else {
+    const node = state.path[0];
+    title.textContent = node.title;
+    document.querySelector('.search-wrap').style.display = 'none';
+    main.innerHTML = renderDetail(node);
+    bindDetailActions(node);
+  }
+}
+
+function bindRowActions(parentNode){
+  document.querySelectorAll('#main [data-id]').forEach(el => {
+    const id = el.getAttribute('data-id');
+    if (el.classList.contains('edit-btn')) {
+      el.addEventListener('click', (e) => { e.stopPropagation(); const n = findChild(parentNode, id); if (n) openEditModal(n, parentNode); });
+    } else if (el.classList.contains('delete-btn')) {
+      el.addEventListener('click', (e) => { e.stopPropagation(); const n = findChild(parentNode, id); if (n) deleteNode(n, parentNode); });
+    } else if (el.classList.contains('card') || el.classList.contains('row')) {
+      el.addEventListener('click', () => { const n = findChild(parentNode, id); if (n) open(n); });
+    }
+  });
+}
+
+function bindRegionsGridActions(){
+  document.querySelectorAll('#main [data-id]').forEach(el => {
+    const id = el.getAttribute('data-id');
+    const region = appData.regions.find(r => r.id === id);
+    if (!region) return;
+    if (el.classList.contains('edit-btn')) {
+      el.addEventListener('click', (e) => { e.stopPropagation(); openEditRegionModal(region); });
+    } else if (el.classList.contains('delete-btn')) {
+      el.addEventListener('click', (e) => { e.stopPropagation(); deleteRegion(region.id); });
+    } else if (el.classList.contains('card')) {
+      el.addEventListener('click', () => open(region));
+    }
+  });
+}
+
+function bindRegionEntryActions(entries){
+  document.querySelectorAll('#main [data-id]').forEach(el => {
+    const id = el.getAttribute('data-id');
+    const entry = entries.find(e => e.node.id === id);
+    if (!entry) return;
+    if (el.classList.contains('edit-btn')) {
+      el.addEventListener('click', (e) => { e.stopPropagation(); openEditModal(entry.node, findParentOf(entry.node)); });
+    } else if (el.classList.contains('delete-btn')) {
+      el.addEventListener('click', (e) => { e.stopPropagation(); deleteNode(entry.node, findParentOf(entry.node)); });
+    } else if (el.classList.contains('row')) {
+      el.addEventListener('click', () => open(entry.node));
+    }
+  });
+}
+
+function bindDetailActions(node){
+  const editBtn = document.getElementById('detailEditBtn');
+  const delBtn = document.getElementById('detailDeleteBtn');
+  const favBtn = document.getElementById('favToggleBtn');
+  const parent = findParentOf(node) || rootNode;
+  if (editBtn) editBtn.addEventListener('click', () => openEditModal(node, parent));
+  if (delBtn) delBtn.addEventListener('click', () => deleteNode(node, parent));
+  if (favBtn) favBtn.addEventListener('click', () => {
+    toggleFavorite(node.id);
+    favBtn.innerHTML = isFavorite(node.id) ? '&#9733;' : '&#9734;';
+    favBtn.classList.toggle('active', isFavorite(node.id));
+  });
+}
+
+function deleteNode(node, parent){
+  if (!parent) return;
+  if (!confirm(`"${node.title}" wirklich löschen? Enthaltene Unterordner/Einträge werden mit gelöscht.`)) return;
+  parent.children = (parent.children || []).filter(c => c.id !== node.id);
+  saveData();
+  if (currentNode() === node) { state.path.pop(); }
+  render();
+}
+
+function deleteRegion(id){
+  const region = appData.regions.find(r => r.id === id);
+  if (!region) return;
+  if (!confirm(`Gebiet "${region.title}" wirklich löschen? Die Verknüpfung bei zugeordneten Einträgen wird entfernt, die Einträge selbst bleiben erhalten.`)) return;
+  appData.regions = appData.regions.filter(r => r.id !== id);
+  (function stripRegion(node){
+    (node.children || []).forEach(child => {
+      if (child.detail && child.detail.regions) {
+        child.detail.regions = child.detail.regions.filter(rid => rid !== id);
+      }
+      if (!child.detail) stripRegion(child);
+    });
+  })(rootNode);
+  saveData();
+  if (currentNode() === region) { state.path.pop(); }
+  render();
+}
+
+/* ================= MODAL: Fach/Ordner/Eintrag hinzufügen/bearbeiten ================= */
+
+let editingNode = null;
+let editingParent = null;
+let tempSections = [];
+let tempMediaList = [];
+let tempImage = '';
+let tempRegions = [];
+
+function openAddModal(parent){
+  editingNode = null;
+  editingParent = parent;
+  tempSections = [];
+  tempMediaList = [];
+  tempImage = '';
+  tempRegions = [];
+  showModal({ title: '', type: 'folder', isSubjectLevel: !!parent.isRoot, editing: false });
+}
+
+function openEditModal(node, parent){
+  editingNode = node;
+  editingParent = parent;
+  tempSections = node.detail ? JSON.parse(JSON.stringify(node.detail.sections || [])) : [];
+  tempMediaList = node.detail ? normalizeMediaList(node.detail.media) : [];
+  tempImage = node.image || '';
+  tempRegions = node.detail && node.detail.regions ? [...node.detail.regions] : [];
+  showModal({ title: node.title, type: node.detail ? 'entry' : 'folder', isSubjectLevel: !!parent.isRoot, editing: true });
+}
+
+function renderMediaListEditor(){
+  if (tempMediaList.length === 0) return '<div class="empty-hint">Noch kein Medium hinzugefügt</div>';
+  return tempMediaList.map((src, i) => {
+    const ytId = getYouTubeEmbedId(src);
+    const isVideo = !ytId && src.startsWith('data:video');
+    const preview = ytId
+      ? `<iframe class="media-preview-frame" src="https://www.youtube-nocookie.com/embed/${escapeAttr(ytId)}" frameborder="0" allowfullscreen></iframe>`
+      : (isVideo ? `<video class="media-preview" src="${src}" controls></video>` : `<img class="media-preview" src="${src}">`);
+    return `
+      <div class="media-item-edit" data-midx="${i}">
+        ${preview}
+        <button type="button" class="btn-secondary remove-media-btn" data-midx="${i}">Dieses Medium entfernen</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderSectionBlocks(){
+  if (tempSections.length === 0) return '<div class="empty-hint">Noch keine Abschnitte</div>';
+  return tempSections.map((s, i) => `
+    <div class="section-block" data-idx="${i}">
+      <input type="text" class="modal-input section-heading" data-idx="${i}" placeholder="Überschrift, z.B. Handanlage" value="${escapeAttr(s.heading || '')}">
+      <textarea class="modal-input section-text" data-idx="${i}" rows="3" placeholder="Freitext / Erklärung (optional)">${escapeHtml(s.text || '')}</textarea>
+      <textarea class="modal-input section-bullets" data-idx="${i}" rows="3" placeholder="Stichpunkte, ein Punkt pro Zeile (optional)">${escapeHtml((s.bullets || []).join('\n'))}</textarea>
+      <button type="button" class="btn-secondary remove-section-btn" data-idx="${i}">Abschnitt entfernen</button>
+    </div>
+  `).join('');
+}
+
+function renderRegionCheckboxes(){
+  const regions = sortedRegions();
+  if (regions.length === 0) return '<div class="empty-hint">Noch keine Gebiete angelegt (siehe Reiter "Nach Gebiet").</div>';
+  return `<div class="region-checks">${
+    regions.map(r => `
+      <label class="region-check">
+        <input type="checkbox" class="region-checkbox" value="${escapeAttr(r.id)}" ${tempRegions.includes(r.id) ? 'checked' : ''}>
+        ${escapeHtml(r.title)}
+      </label>
+    `).join('')
+  }</div>`;
+}
+
+function buildModalHTML(opts){
+  const showTypeRadios = !opts.isSubjectLevel;
+  const showEntryFields = !opts.isSubjectLevel && opts.type === 'entry';
+  const showImageField = opts.isSubjectLevel;
+
+  return `
+    <h3 class="modal-title">${opts.editing ? 'Bearbeiten' : 'Neu hinzufügen'}</h3>
+    <label class="field-label">Titel</label>
+    <input type="text" id="modalTitleInput" class="modal-input" value="${escapeAttr(opts.title || '')}" placeholder="z.B. Kniegelenk">
+
+    ${showTypeRadios ? `
+      <label class="field-label">Typ</label>
+      <div class="radio-group">
+        <label><input type="radio" name="modalType" value="folder" ${opts.type === 'folder' ? 'checked' : ''}> Ordner (enthält weitere Einträge)</label>
+        <label><input type="radio" name="modalType" value="entry" ${opts.type === 'entry' ? 'checked' : ''}> Eintrag mit Inhalt</label>
+      </div>
+    ` : ''}
+
+    ${showImageField ? `
+      <label class="field-label">Bild (optional, für die Kachel)</label>
+      <div class="media-field">
+        <button type="button" class="btn-secondary" id="pickImageBtn">Bild wählen</button>
+        <button type="button" class="btn-secondary" id="clearImageBtn">Entfernen</button>
+      </div>
+      <div id="imagePreviewWrap">${tempImage ? `<img class="media-preview" src="${tempImage}">` : ''}</div>
+    ` : ''}
+
+    <div id="entryFields" class="${showEntryFields ? '' : 'hidden'}">
+      <label class="field-label">Medien (Bilder/Videos, mehrere möglich)</label>
+      <div id="mediaListWrap">${renderMediaListEditor()}</div>
+      <div class="media-field">
+        <button type="button" class="btn-secondary" id="pickMediaBtn">Datei hinzufügen</button>
+      </div>
+      <div class="media-url-row">
+        <input type="text" id="mediaUrlInput" class="modal-input" placeholder="oder Video-Link einfügen (z.B. YouTube)">
+        <button type="button" class="btn-secondary" id="useUrlBtn">Hinzufügen</button>
+      </div>
+
+      <label class="field-label">Gebiete (fachübergreifend, Mehrfachauswahl möglich)</label>
+      <div id="regionChecksWrap">${renderRegionCheckboxes()}</div>
+
+      <label class="field-label">Abschnitte</label>
+      <div id="sectionsContainer">${renderSectionBlocks()}</div>
+      <button type="button" class="btn-secondary" id="addSectionBtn">+ Abschnitt hinzufügen</button>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" id="modalCancelBtn">Abbrechen</button>
+      <button type="button" class="btn-primary" id="modalSaveBtn">Speichern</button>
+    </div>
+  `;
+}
+
+function showModal(opts){
+  document.getElementById('modalBox').innerHTML = buildModalHTML(opts);
+  document.getElementById('modalOverlay').classList.remove('hidden');
+  bindModalEvents(opts);
+}
+function closeModal(){
+  document.getElementById('modalOverlay').classList.add('hidden');
+}
+
+function bindModalEvents(opts){
+  document.getElementById('modalCancelBtn').addEventListener('click', closeModal);
+  document.getElementById('modalSaveBtn').addEventListener('click', () => saveModal(opts));
+
+  if (!opts.isSubjectLevel) {
+    document.querySelectorAll('input[name="modalType"]').forEach(r => {
+      r.addEventListener('change', (e) => {
+        opts.type = e.target.value;
+        document.getElementById('entryFields').classList.toggle('hidden', opts.type !== 'entry');
+      });
+    });
+  }
+
+  if (opts.isSubjectLevel) {
+    document.getElementById('pickImageBtn').addEventListener('click', () => pickFile('image'));
+    document.getElementById('clearImageBtn').addEventListener('click', () => {
+      tempImage = '';
+      document.getElementById('imagePreviewWrap').innerHTML = '';
+    });
+  }
+
+  const pickMediaBtn = document.getElementById('pickMediaBtn');
+  if (pickMediaBtn) {
+    pickMediaBtn.addEventListener('click', () => pickFile('media'));
+    document.getElementById('addSectionBtn').addEventListener('click', () => {
+      tempSections.push({ heading: '', bullets: [] });
+      document.getElementById('sectionsContainer').innerHTML = renderSectionBlocks();
+      bindSectionEvents();
+    });
+    document.getElementById('useUrlBtn').addEventListener('click', () => {
+      const urlInput = document.getElementById('mediaUrlInput');
+      const val = urlInput.value.trim();
+      if (val) {
+        tempMediaList.push(val);
+        urlInput.value = '';
+        document.getElementById('mediaListWrap').innerHTML = renderMediaListEditor();
+        bindMediaListEvents();
+      }
+    });
+    bindSectionEvents();
+    bindMediaListEvents();
+  }
+}
+
+function bindMediaListEvents(){
+  document.querySelectorAll('.remove-media-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(e.target.getAttribute('data-midx'), 10);
+      tempMediaList.splice(idx, 1);
+      document.getElementById('mediaListWrap').innerHTML = renderMediaListEditor();
+      bindMediaListEvents();
+    });
+  });
+}
+
+function bindSectionEvents(){
+  document.querySelectorAll('.remove-section-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(e.target.getAttribute('data-idx'), 10);
+      tempSections.splice(idx, 1);
+      document.getElementById('sectionsContainer').innerHTML = renderSectionBlocks();
+      bindSectionEvents();
+    });
+  });
+}
+
+function pickFile(target){
+  const input = document.getElementById('fileInput');
+  input.value = '';
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 3 * 1024 * 1024) {
+      if (!confirm(`Die Datei ist ${(file.size / 1024 / 1024).toFixed(1)} MB groß. Große Videos können den Browser-Speicher schnell füllen. Trotzdem einbetten?`)) return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (target === 'media') {
+        tempMediaList.push(reader.result);
+        document.getElementById('mediaListWrap').innerHTML = renderMediaListEditor();
+        bindMediaListEvents();
+      } else {
+        tempImage = reader.result;
+        document.getElementById('imagePreviewWrap').innerHTML = `<img class="media-preview" src="${tempImage}">`;
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  input.click();
+}
+
+function saveModal(opts){
+  const titleInput = document.getElementById('modalTitleInput');
+  const titleVal = (titleInput.value || '').trim();
+  if (!titleVal) { alert('Bitte einen Titel eingeben.'); titleInput.focus(); return; }
+
+  const type = opts.isSubjectLevel ? 'folder' : opts.type;
+
+  let sections = [];
+  let regionsSelected = [];
+  if (type === 'entry') {
+    document.querySelectorAll('.section-block').forEach(block => {
+      const heading = block.querySelector('.section-heading').value.trim();
+      const text = block.querySelector('.section-text').value.trim();
+      const bulletsRaw = block.querySelector('.section-bullets').value;
+      const bullets = bulletsRaw.split('\n').map(b => b.trim()).filter(Boolean);
+      if (heading || text || bullets.length) sections.push({ heading, text, bullets });
+    });
+    document.querySelectorAll('.region-checkbox:checked').forEach(cb => regionsSelected.push(cb.value));
+  }
+
+  if (editingNode) {
+    editingNode.title = titleVal;
+    if (opts.isSubjectLevel) editingNode.image = tempImage;
+    if (type === 'entry') {
+      editingNode.children = [];
+      editingNode.detail = { media: [...tempMediaList], sections, regions: regionsSelected };
+    } else {
+      editingNode.detail = null;
+      if (!editingNode.children) editingNode.children = [];
+    }
+  } else {
+    const newNode = {
+      id: genId(),
+      title: titleVal,
+      image: opts.isSubjectLevel ? tempImage : '',
+      children: [],
+      detail: type === 'entry' ? { media: [...tempMediaList], sections, regions: regionsSelected } : null
+    };
+    if (!editingParent.children) editingParent.children = [];
+    editingParent.children.push(newNode);
+  }
+
+  saveData();
+  closeModal();
+  render();
+}
+
+/* ================= MODAL: Gebiet hinzufügen/bearbeiten ================= */
+
+let editingRegion = null;
+
+function openAddRegionModal(){
+  editingRegion = null;
+  showRegionModal('');
+}
+function openEditRegionModal(region){
+  editingRegion = region;
+  showRegionModal(region.title);
+}
+function buildRegionModalHTML(title, editing){
+  return `
+    <h3 class="modal-title">${editing ? 'Gebiet bearbeiten' : 'Neues Gebiet'}</h3>
+    <label class="field-label">Titel</label>
+    <input type="text" id="regionTitleInput" class="modal-input" value="${escapeAttr(title || '')}" placeholder="z.B. Knie">
+    <div class="modal-actions">
+      <button type="button" class="btn-secondary" id="regionCancelBtn">Abbrechen</button>
+      <button type="button" class="btn-primary" id="regionSaveBtn">Speichern</button>
+    </div>
+  `;
+}
+function showRegionModal(title){
+  document.getElementById('modalBox').innerHTML = buildRegionModalHTML(title, !!editingRegion);
+  document.getElementById('modalOverlay').classList.remove('hidden');
+  document.getElementById('regionCancelBtn').addEventListener('click', closeModal);
+  document.getElementById('regionSaveBtn').addEventListener('click', saveRegionModal);
+}
+function saveRegionModal(){
+  const input = document.getElementById('regionTitleInput');
+  const val = (input.value || '').trim();
+  if (!val) { alert('Bitte einen Titel eingeben.'); input.focus(); return; }
+  if (editingRegion) {
+    editingRegion.title = val;
+  } else {
+    appData.regions.push({ id: genId(), title: val });
+  }
+  saveData();
+  closeModal();
+  render();
+}
+
+async function shareBackup(){
+  const filename = 'lernapp-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  const file = new File([JSON.stringify(appData, null, 2)], filename, { type: 'application/json' });
+
+  try {
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: 'Lernapp Backup',
+        text: 'Backup meiner Änderungen an der Lernapp'
+      });
+      return;
+    }
+  } catch (e) {
+    if (e && e.name === 'AbortError') return; // Nutzer hat abgebrochen
+    // sonst: Fallback unten versuchen
+  }
+
+  // Fallback, falls Teilen von Dateien auf diesem Gerät/Browser nicht unterstützt wird
+  exportBackup();
+  alert('Direktes Teilen wird hier nicht unterstützt — die Backup-Datei wurde stattdessen heruntergeladen. Bitte manuell verschicken.');
+}
+
+function exportBackup(){
+  const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'lernapp-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importBackup(){
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json';
+  input.onchange = () => {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result);
+        if (!parsed.subjects) throw new Error('Ungültiges Format');
+        if (!parsed.regions) parsed.regions = seedRegions();
+        if (!confirm('Backup importieren? Das ersetzt alle aktuellen Inhalte in dieser App.')) return;
+        appData = parsed;
+        saveData();
+        state.mode = 'subjects';
+        state.path = [];
+        render();
+      } catch (e) {
+        alert('Backup konnte nicht gelesen werden: ' + e.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+// Escaping
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+function escapeAttr(s) { return escapeHtml(s); }
+
+// Events
+document.getElementById('backBtn').addEventListener('click', back);
+document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('editToggleBtn').addEventListener('click', () => {
+  editMode = !editMode;
+  document.getElementById('editToggleBtn').classList.toggle('active', editMode);
+  render();
+});
+document.getElementById('tabSubjectsBtn').addEventListener('click', () => {
+  state.mode = 'subjects';
+  state.path = [];
+  document.getElementById('searchInput').value = '';
+  render();
+});
+document.getElementById('tabRegionsBtn').addEventListener('click', () => {
+  state.mode = 'regions';
+  state.path = [];
+  document.getElementById('searchInput').value = '';
+  render();
+});
+document.getElementById('tabFavoritesBtn').addEventListener('click', () => {
+  state.mode = 'favorites';
+  state.path = [];
+  document.getElementById('searchInput').value = '';
+  render();
+});
+document.getElementById('randomBtn').addEventListener('click', () => {
+  const all = collectAllEntries();
+  if (all.length === 0) { alert('Es sind noch keine Einträge vorhanden.'); return; }
+  const pick = all[Math.floor(Math.random() * all.length)];
+  state.mode = 'subjects';
+  state.path = [pick];
+  document.getElementById('searchInput').value = '';
+  render();
+});
+document.getElementById('fabAdd').addEventListener('click', () => {
+  if (state.mode === 'regions') {
+    if (state.path.length === 0) openAddRegionModal();
+  } else if (state.mode === 'subjects') {
+    openAddModal(currentNode());
+  }
+});
+document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'modalOverlay') closeModal();
+});
+
+/* ================= Zugang (Admin/Betrachter) ================= */
+
+const ADMIN_PASSWORD = 'loris schebner';
+const VIEWER_PASSWORD = 'bbs';
+const ROLE_KEY = 'lernapp_role_v1';
+
+let userRole = null; // 'admin' | 'viewer'
+
+function getStoredRole(){
+  try {
+    const stored = localStorage.getItem(ROLE_KEY);
+    if (stored === 'admin' || stored === 'viewer') return stored;
+  } catch (e) { /* ignore */ }
+  return null;
+}
+
+function applyRoleUI(){
+  const editBtn = document.getElementById('editToggleBtn');
+  if (userRole === 'admin') {
+    editBtn.style.display = '';
+  } else {
+    editBtn.style.display = 'none';
+    editMode = false;
+  }
+}
+
+function attemptLogin(){
+  const input = document.getElementById('loginPasswordInput');
+  const errorEl = document.getElementById('loginError');
+  const val = input.value;
+
+  if (val === ADMIN_PASSWORD) {
+    userRole = 'admin';
+  } else if (val === VIEWER_PASSWORD) {
+    userRole = 'viewer';
+  } else {
+    errorEl.textContent = 'Falsches Passwort.';
+    return;
+  }
+
+  try { localStorage.setItem(ROLE_KEY, userRole); } catch (e) { /* ignore */ }
+  document.getElementById('loginOverlay').classList.add('hidden');
+  applyRoleUI();
+  showToast(updateStreakAndGetMessage());
+  render();
+}
+
+document.getElementById('loginSubmitBtn').addEventListener('click', attemptLogin);
+document.getElementById('loginPasswordInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') attemptLogin();
+});
+
+/* ================= Lernstreak / Motivationshinweis ================= */
+
+const STREAK_KEY = 'lernapp_streak_v1';
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function daysBetween(a, b){
+  const da = new Date(a + 'T00:00:00');
+  const db = new Date(b + 'T00:00:00');
+  return Math.round((db - da) / 86400000);
+}
+function updateStreakAndGetMessage(){
+  let data = { lastDate: null, streak: 0 };
+  try {
+    const raw = localStorage.getItem(STREAK_KEY);
+    if (raw) data = JSON.parse(raw);
+  } catch (e) { /* ignore */ }
+
+  const today = todayStr();
+  if (data.lastDate === today) return null; // heute schon besucht
+
+  let message;
+  if (!data.lastDate) {
+    data.streak = 1;
+    message = 'Willkommen! Lass uns loslegen 💪';
+  } else {
+    const diff = daysBetween(data.lastDate, today);
+    if (diff === 1) {
+      data.streak = (data.streak || 0) + 1;
+      message = `Tag ${data.streak} in Folge! 🔥`;
+    } else if (diff > 1) {
+      data.streak = 1;
+      message = diff <= 3 ? 'Schön, dass du wieder da bist! 👋' : `${diff} Tage nicht mehr gelernt — Zeit für ein Comeback! 💪`;
+    } else {
+      data.streak = data.streak || 1;
+      message = null;
+    }
+  }
+  data.lastDate = today;
+  try { localStorage.setItem(STREAK_KEY, JSON.stringify(data)); } catch (e) { /* ignore */ }
+  return message;
+}
+function showToast(msg){
+  if (!msg) return;
+  const toast = document.getElementById('streakToast');
+  toast.textContent = msg;
+  toast.classList.remove('hidden');
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.classList.add('hidden'), 300);
+  }, 3500);
+}
+
+function logout(){
+  try { localStorage.removeItem(ROLE_KEY); } catch (e) { /* ignore */ }
+  userRole = null;
+  editMode = false;
+  const input = document.getElementById('loginPasswordInput');
+  input.value = '';
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('loginOverlay').classList.remove('hidden');
+}
+document.getElementById('logoutBtn').addEventListener('click', logout);
+
+/* ================= Design (Hell/Dunkel) ================= */
+
+const THEME_KEY = 'lernapp_theme_v1';
+
+function getStoredTheme(){
+  try {
+    const t = localStorage.getItem(THEME_KEY);
+    if (t === 'light' || t === 'dark') return t;
+  } catch (e) { /* ignore */ }
+  return 'light';
+}
+
+function applyTheme(theme){
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+  document.querySelectorAll('input[name="themeChoice"]').forEach(r => {
+    r.checked = (r.value === theme);
+  });
+}
+
+function setTheme(theme){
+  try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* ignore */ }
+  applyTheme(theme);
+}
+
+document.getElementById('settingsBtn').addEventListener('click', () => {
+  applyTheme(getStoredTheme());
+  document.getElementById('settingsOverlay').classList.remove('hidden');
+});
+document.getElementById('settingsCloseBtn').addEventListener('click', () => {
+  document.getElementById('settingsOverlay').classList.add('hidden');
+});
+document.getElementById('settingsOverlay').addEventListener('click', (e) => {
+  if (e.target.id === 'settingsOverlay') document.getElementById('settingsOverlay').classList.add('hidden');
+});
+document.querySelectorAll('input[name="themeChoice"]').forEach(r => {
+  r.addEventListener('change', (e) => setTheme(e.target.value));
+});
+
+// Gespeichertes Design sofort anwenden (auch vor dem Login)
+applyTheme(getStoredTheme());
+
+// Start
+async function init(){
+  appData = await loadData();
+  favorites = loadFavorites();
+
+  const storedRole = getStoredRole();
+  if (storedRole) {
+    userRole = storedRole;
+    applyRoleUI();
+    showToast(updateStreakAndGetMessage());
+  } else {
+    document.getElementById('loginOverlay').classList.remove('hidden');
+  }
+  render();
+}
+init();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => { /* Offline-Funktion einfach nicht verfügbar */ });
+  });
+}
+
+</script>
+</body>
+</html>
