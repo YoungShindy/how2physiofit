@@ -1,0 +1,8 @@
+# Geheimnisse und lokale Dateien nie einchecken
+.env
+.env.*
+*.pem
+*.key
+*.log
+.DS_Store
+node_modules/

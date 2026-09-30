@@ -177,3 +177,163 @@ test('Menü öffnet sich und Dunkelmodus lässt sich umschalten', { skip }, asyn
     assert.deepEqual(errors, []);
   } finally { await context.close(); }
 });
+
+// Bösartige Inhalte (z.B. aus einem fremden Backup oder manipulierten data.json) dürfen kein JavaScript ausführen.
+const XSS_PAYLOADS = [
+  'x" onerror="window.__xss=1',
+  'data:image/png;base64,AAAA" onerror="window.__xss=1',
+  'javascript:window.__xss=1',
+  '\u0001javascript:window.__xss=1',
+  'data:text/html;base64,PHNjcmlwdD53aW5kb3cuX194c3M9MTwvc2NyaXB0Pg==',
+  '"><img src=x onerror=window.__xss=1>',
+];
+const EVIL_DATA = {
+  subjects: [{
+    id: 'evil', title: 'Evil <img src=x onerror=window.__xss=1>', image: 'x" onerror="window.__xss=1', detail: null,
+    children: [{
+      id: 'evil-entry', title: 'Eintrag <b onmouseover=window.__xss=1>', image: '', children: [],
+      detail: {
+        media: XSS_PAYLOADS, regions: ['r1'],
+        sections: [{ heading: '<img src=x onerror=window.__xss=1>', text: '<script>window.__xss=1</script>', bullets: ['<svg onload=window.__xss=1>'] }],
+      },
+    }],
+  }],
+  regions: [{ id: 'r1', title: 'Gebiet <img src=x onerror=window.__xss=1>', image: 'x" onerror="window.__xss=1' }],
+};
+
+test('XSS: manipulierte Daten führen keinen Code aus und erzeugen keine Event-Handler', { skip }, async () => {
+  const { context, page, errors } = await openApp();
+  try {
+    await page.route('**/data.json*', (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify(EVIL_DATA) }));
+    await page.reload();
+    await page.waitForSelector('#main .card');
+
+    const injected = () => page.evaluate(() => ({
+      fired: window.__xss ?? null,
+      handlers: [...document.querySelectorAll('*')].filter((el) => [...el.attributes].some((a) => /^on/i.test(a.name))).map((el) => el.outerHTML.slice(0, 80)),
+      scripts: document.querySelectorAll('#main script').length,
+    }));
+
+    // Kachelansicht (Fach-Bild, Titel), dann Eintrag mit Payload-Medien und -Abschnitten, dann Gebiete
+    await page.locator('#main .card').first().click();
+    await page.locator('#main .row').first().click();
+    await page.waitForSelector('#main .detail h2');
+    await page.waitForTimeout(300);
+    let r = await injected();
+    assert.deepEqual(r, { fired: null, handlers: [], scripts: 0 }, 'Detailansicht: Code ausgeführt oder Handler injiziert');
+    assert.ok(await page.locator('#main .detail .media', { hasText: 'Ungültiges Medium' }).count() >= 4, 'unsichere Medien wurden nicht abgelehnt');
+    assert.match(await page.locator('#main .detail').innerText(), /<img src=x onerror=window\.__xss=1>/, 'Text muss als Text sichtbar bleiben');
+
+    while (await page.locator('#backBtn.visible').count()) await page.click('#backBtn');
+    await page.click('#tabRegionsBtn');
+    await page.waitForSelector('#main .card');
+    await page.waitForTimeout(300);
+    r = await injected();
+    assert.deepEqual(r, { fired: null, handlers: [], scripts: 0 }, 'Gebietsansicht: Code ausgeführt oder Handler injiziert');
+    assert.deepEqual(errors.filter((e) => !/Failed to load resource|net::ERR|request failed|HTTP 4/.test(e)), [], 'unerwartete Fehler');
+  } finally { await context.close(); }
+});
+
+test('XSS: Link-Feld im Admin-Dialog lehnt gefährliche Eingaben ab und akzeptiert https-Links', { skip }, async () => {
+  const { context, page } = await openApp('admin');
+  try {
+    const dialogs = [];
+    page.on('dialog', (d) => { dialogs.push(d.message()); d.dismiss(); });
+    await page.click('#editToggleBtn');
+    await page.locator('#main .card', { hasText: 'Physiotherapie' }).click();
+    await page.click('#fabAdd');
+    await page.waitForSelector('#modalBox #useUrlBtn', { state: 'attached' });
+    await page.check('input[name="modalType"][value="entry"]');
+
+    for (const bad of ['x" onerror="window.__xss=1', 'javascript:window.__xss=1', 'data:text/html;base64,AAAA']) {
+      await page.fill('#mediaUrlInput', bad);
+      await page.click('#useUrlBtn');
+    }
+    assert.equal(dialogs.length, 3, 'gefährliche Links wurden nicht abgelehnt');
+    assert.equal(await page.locator('#mediaListWrap .media-item-edit').count(), 0, 'gefährlicher Link wurde übernommen');
+
+    await page.fill('#mediaUrlInput', 'https://example.org/bild.png');
+    await page.click('#useUrlBtn');
+    assert.equal(await page.locator('#mediaListWrap .media-item-edit').count(), 1, 'https-Link wurde nicht übernommen');
+    assert.equal(dialogs.length, 3);
+    assert.equal(await page.evaluate(() => window.__xss ?? null), null);
+  } finally { await context.close(); }
+});
+
+test('Medien-Allowlist akzeptiert alle vorhandenen Medien aus data.json', { skip }, async () => {
+  const { context, page } = await openApp();
+  try {
+    const all = [];
+    (function collect(nodes) {
+      for (const n of nodes) {
+        const m = n.detail?.media;
+        for (const x of Array.isArray(m) ? m : m ? [m] : []) all.push(x);
+        if (n.image) all.push(n.image);
+        collect(n.children ?? []);
+      }
+    })(data.subjects);
+    for (const r of data.regions) if (r.image) all.push(r.image);
+    const rejected = await page.evaluate((list) => list.filter((x) => !isSafeMediaSrc(x) && !getYouTubeEmbedId(x)).map((x) => x.slice(0, 60)), all);
+    assert.deepEqual(rejected, []);
+  } finally { await context.close(); }
+});
+
+test('Backup-Import lehnt ungültige Dateien ab und ändert nichts', { skip }, async () => {
+  const { context, page } = await openApp('admin');
+  try {
+    const dialogs = [];
+    page.on('dialog', (d) => { dialogs.push(d.message()); d.accept(); });
+    const before = await page.evaluate(() => JSON.stringify(appData));
+    for (const body of ['{"subjects":"<img src=x onerror=1>"}', '{"subjects":[],"regions":{}}', 'kein json']) {
+      await page.evaluate(() => { window.__pickerDone = false; });
+      const chooser = page.waitForEvent('filechooser');
+      await page.evaluate(() => importBackup());
+      (await chooser).setFiles({ name: 'b.json', mimeType: 'application/json', buffer: Buffer.from(body) });
+      await page.waitForEvent('dialog');
+    }
+    assert.equal(dialogs.length, 3);
+    assert.ok(dialogs.every((m) => m.startsWith('Backup konnte nicht gelesen werden')), `unerwartete Dialoge: ${dialogs}`);
+    assert.equal(await page.evaluate(() => JSON.stringify(appData)), before, 'appData wurde trotz ungültigem Backup verändert');
+  } finally { await context.close(); }
+});
+
+test('Alle Einträge aus data.json rendern ohne CSP-Verletzung und ohne abgelehnte Medien', { skip }, async () => {
+  const { context, page, errors } = await openApp();
+  try {
+    await page.addInitScript(() => {
+      window.__csp = [];
+      document.addEventListener('securitypolicyviolation', (e) => window.__csp.push(`${e.violatedDirective}: ${e.blockedURI.slice(0, 60)}`));
+    });
+    await page.reload();
+    await page.waitForSelector('#main .card');
+
+    const result = await page.evaluate(async () => {
+      const visited = [], rejected = [];
+      const pause = () => new Promise((r) => setTimeout(r, 40));
+      async function walk(nodes, trail) {
+        for (const n of nodes) {
+          state.mode = 'subjects';
+          state.path = [...trail, n];
+          render();
+          if (n.detail) {
+            visited.push(n.id);
+            if (document.querySelector('#main .media')?.textContent.includes('Ungültiges Medium')
+                || [...document.querySelectorAll('#main .media span')].some((s) => s.textContent.includes('Ungültiges Medium'))) rejected.push(n.id);
+            await pause();
+          }
+          await walk(n.children || [], [...trail, n]);
+        }
+      }
+      await walk(appData.subjects, []);
+      state.path = []; state.mode = 'regions'; render();
+      await pause();
+      return { visited, rejected, csp: window.__csp };
+    });
+
+    assert.ok(result.visited.length >= 10, `nur ${result.visited.length} Einträge besucht`);
+    assert.deepEqual(result.rejected, [], 'Einträge mit abgelehntem Medium');
+    assert.deepEqual(result.csp, [], 'CSP-Verletzungen');
+    // Netzwerkfehler (z.B. YouTube im Sandbox-Netz) sind hier irrelevant, JS-/CSP-Fehler nicht
+    assert.deepEqual(errors.filter((e) => /pageerror|Content Security Policy|Refused to/i.test(e)), []);
+  } finally { await context.close(); }
+});

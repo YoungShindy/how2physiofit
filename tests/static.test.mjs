@@ -117,3 +117,30 @@ test('index.html: verlinkt Manifest, Icons und registriert den Service Worker', 
     if (!isExternal(href)) assert.ok(exists(href), `verlinkte Datei fehlt: ${href}`);
   }
 });
+
+for (const page of ['index.html', 'physio-app.html']) {
+  test(`${page}: Content-Security-Policy ist gesetzt und streng genug`, () => {
+    const html = read(page);
+    const csp = html.match(/http-equiv=["']Content-Security-Policy["']\s+content="([^"]+)"/i)?.[1];
+    assert.ok(csp, 'keine CSP-Meta-Angabe');
+    for (const required of ["default-src 'self'", "object-src 'none'", "base-uri 'self'", "form-action 'self'", "connect-src 'self'", 'frame-src https://www.youtube-nocookie.com']) {
+      assert.ok(csp.includes(required), `CSP enthält nicht: ${required}`);
+    }
+    assert.ok(!/\*/.test(csp), 'CSP enthält einen Wildcard-Eintrag');
+  });
+}
+
+test('Repo enthaelt keine API-Keys, Tokens oder privaten Schluessel', () => {
+  const patterns = [
+    /AKIA[0-9A-Z]{16}/, /ghp_[A-Za-z0-9]{30,}/, /github_pat_[A-Za-z0-9_]{30,}/, /sk-[A-Za-z0-9]{32,}/,
+    /AIza[0-9A-Za-z_-]{35}/, /xox[baprs]-[A-Za-z0-9-]{10,}/, /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+  ];
+  const files = execFileSync('git', ['ls-files', '-z', '--', '.', ':!videos', ':!*.png'], { cwd: ROOT, encoding: 'utf8' })
+    .split('\0').filter(Boolean);
+  const hits = [];
+  for (const f of files) {
+    const text = read(f);
+    for (const re of patterns) if (re.test(text)) hits.push(`${f}: ${re}`);
+  }
+  assert.deepEqual(hits, [], `moegliche Geheimnisse gefunden:\n${hits.join('\n')}`);
+});

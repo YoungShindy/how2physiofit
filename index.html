@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' data: blob: https:; frame-src https://www.youtube-nocookie.com; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; worker-src 'self'">
 <title>Lern-App</title>
 <link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="favicon-16.png" sizes="16x16" type="image/png">
@@ -1371,6 +1372,7 @@ function normalizeMediaList(media){
 
 function renderMediaItem(src){
   const ytId = getYouTubeEmbedId(src);
+  if (!ytId && !isSafeMediaSrc(src)) return '<div class="media"><span>Ungültiges Medium</span></div>';
   const isVideo = !ytId && (src.startsWith('data:video') || /\.(mp4|webm|mov)$/i.test(src));
   const autoplay = getAutoplay();
   return `
@@ -1378,8 +1380,8 @@ function renderMediaItem(src){
       ${ytId
         ? `<iframe src="https://www.youtube-nocookie.com/embed/${escapeAttr(ytId)}${autoplay ? '?autoplay=1&mute=1' : ''}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`
         : (isVideo
-            ? `<video src="${src}" controls playsinline${autoplay ? ' autoplay muted' : ''}></video>`
-            : `<img src="${src}" alt="">`)
+            ? `<video src="${escapeAttr(src)}" controls playsinline${autoplay ? ' autoplay muted' : ''}></video>`
+            : `<img src="${escapeAttr(src)}" alt="">`)
       }
     </div>
   `;
@@ -1658,7 +1660,9 @@ function renderMediaListEditor(){
     const isVideo = !ytId && src.startsWith('data:video');
     const preview = ytId
       ? `<iframe class="media-preview-frame" src="https://www.youtube-nocookie.com/embed/${escapeAttr(ytId)}" frameborder="0" allowfullscreen></iframe>`
-      : (isVideo ? `<video class="media-preview" src="${src}" controls></video>` : `<img class="media-preview" src="${src}">`);
+      : (!isSafeMediaSrc(src)
+        ? '<div class="empty-hint">Ungültiges Medium (wird nicht angezeigt)</div>'
+        : (isVideo ? `<video class="media-preview" src="${escapeAttr(src)}" controls></video>` : `<img class="media-preview" src="${escapeAttr(src)}">`));
     return `
       <div class="media-item-edit" data-midx="${i}">
         ${preview}
@@ -1717,7 +1721,7 @@ function buildModalHTML(opts){
         <button type="button" class="btn-secondary" id="pickImageBtn">Bild wählen</button>
         <button type="button" class="btn-secondary" id="clearImageBtn">Entfernen</button>
       </div>
-      <div id="imagePreviewWrap">${tempImage ? `<img class="media-preview" src="${tempImage}">` : ''}</div>
+      <div id="imagePreviewWrap">${previewImgHTML(tempImage)}</div>
     ` : ''}
 
     <div id="entryFields" class="${showEntryFields ? '' : 'hidden'}">
@@ -1788,6 +1792,10 @@ function bindModalEvents(opts){
       const urlInput = document.getElementById('mediaUrlInput');
       const val = urlInput.value.trim();
       if (val) {
+        if (!isSafeMediaSrc(val) || /^data:/i.test(val)) {
+          alert('Bitte einen gültigen Link mit https:// (oder einen Pfad wie videos/datei.mp4) einfügen.');
+          return;
+        }
         tempMediaList.push(val);
         urlInput.value = '';
         document.getElementById('mediaListWrap').innerHTML = renderMediaListEditor();
@@ -1838,7 +1846,7 @@ function pickFile(target){
         bindMediaListEvents();
       } else {
         tempImage = reader.result;
-        document.getElementById('imagePreviewWrap').innerHTML = `<img class="media-preview" src="${tempImage}">`;
+        document.getElementById('imagePreviewWrap').innerHTML = previewImgHTML(tempImage);
       }
     };
     reader.readAsDataURL(file);
@@ -1919,7 +1927,7 @@ function buildRegionModalHTML(title, editing){
       <button type="button" class="btn-secondary" id="pickRegionImageBtn">Bild wählen</button>
       <button type="button" class="btn-secondary" id="clearRegionImageBtn">Entfernen</button>
     </div>
-    <div id="regionImagePreviewWrap">${tempRegionImage ? `<img class="media-preview" src="${tempRegionImage}">` : '<span class="empty-hint">Kein Bild gewählt</span>'}</div>
+    <div id="regionImagePreviewWrap">${isSafeMediaSrc(tempRegionImage) ? previewImgHTML(tempRegionImage) : '<span class="empty-hint">Kein Bild gewählt</span>'}</div>
 
     <div class="modal-actions">
       <button type="button" class="btn-secondary" id="regionCancelBtn">Abbrechen</button>
@@ -1941,7 +1949,7 @@ function showRegionModal(title){
       const reader = new FileReader();
       reader.onload = () => {
         tempRegionImage = reader.result;
-        document.getElementById('regionImagePreviewWrap').innerHTML = `<img class="media-preview" src="${tempRegionImage}">`;
+        document.getElementById('regionImagePreviewWrap').innerHTML = previewImgHTML(tempRegionImage);
       };
       reader.readAsDataURL(file);
     };
@@ -2013,8 +2021,9 @@ function importBackup(){
     reader.onload = () => {
       try {
         const parsed = JSON.parse(reader.result);
-        if (!parsed.subjects) throw new Error('Ungültiges Format');
+        if (!parsed || !Array.isArray(parsed.subjects)) throw new Error('Ungültiges Format');
         if (!parsed.regions) parsed.regions = seedRegions();
+        else if (!Array.isArray(parsed.regions)) throw new Error('Ungültiges Format');
         if (!confirm('Backup importieren? Das ersetzt alle aktuellen Inhalte in dieser App.')) return;
         appData = parsed;
         saveData();
@@ -2037,6 +2046,20 @@ function escapeHtml(s) {
   }[c]));
 }
 function escapeAttr(s) { return escapeHtml(s); }
+
+// Erlaubte Medienquellen: eingebettete Bilder/Videos (data:), https-Links und relative Pfade (z.B. videos/x.mp4).
+// Alles andere (javascript:, andere data:-Typen, Zeichen die aus einem HTML-Attribut ausbrechen könnten) wird nicht gerendert.
+function isSafeMediaSrc(src){
+  if (typeof src !== 'string') return false;
+  const s = src.trim();
+  if (/^data:(image|video)\/[a-z0-9.+-]+[;,]/i.test(s)) return true;
+  if (/["'<>`\\\s\x00-\x1f\x7f]/.test(s)) return false;
+  if (/^https:\/\//i.test(s)) return true;
+  return !/^([a-z][a-z0-9+.-]*:|\/\/)/i.test(s);
+}
+function previewImgHTML(src){
+  return isSafeMediaSrc(src) ? `<img class="media-preview" src="${escapeAttr(src)}">` : '';
+}
 
 // Events
 document.getElementById('backBtn').addEventListener('click', back);
