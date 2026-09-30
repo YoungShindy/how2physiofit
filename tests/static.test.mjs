@@ -13,6 +13,8 @@ const read = (f) => readFileSync(path.join(ROOT, f), 'utf8');
 const exists = (f) => existsSync(path.join(ROOT, f));
 const isExternal = (s) => /^(https?:|data:)/i.test(s);
 
+const PAGES = ['index.html'];
+
 const data = JSON.parse(read('data.json'));
 
 function walk(nodes, fn, trail = []) {
@@ -98,7 +100,7 @@ test('sw.js: Syntax ok, alle CORE_ASSETS existieren', () => {
   }
 });
 
-for (const page of ['index.html', 'physio-app.html']) {
+for (const page of PAGES) {
   test(`${page}: Inline-JavaScript hat keine Syntaxfehler`, () => {
     const html = read(page);
     const scripts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].map((x) => x[1]);
@@ -118,7 +120,7 @@ test('index.html: verlinkt Manifest, Icons und registriert den Service Worker', 
   }
 });
 
-for (const page of ['index.html', 'physio-app.html']) {
+for (const page of PAGES) {
   test(`${page}: Content-Security-Policy ist gesetzt und streng genug`, () => {
     const html = read(page);
     const csp = html.match(/http-equiv=["']Content-Security-Policy["']\s+content="([^"]+)"/i)?.[1];
