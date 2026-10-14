@@ -303,6 +303,22 @@
               "image": "",
               "detail": null,
               "children": []
+            },
+            {
+              "id": "differenzialdiagnostik-lws-isg-muskel-nerv",
+              "title": "Differenzialdiagnostik von LWS, ISG und Muskel bzw. Nerv",
+              "image": "",
+              "children": [],
+              "detail": {
+                "media": [
+                  "videos/differenzialdiagnostik-lws-isg-muskel-nerv.mp4"
+                ],
+                "regions": [
+                  "region-lws",
+                  "region-becken-isg"
+                ],
+                "sections": []
+              }
             }
           ]
         },
