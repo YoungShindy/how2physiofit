@@ -18,6 +18,10 @@ Schlägt ein Test fehl, erst den Fehler beheben (oder dem Nutzer melden), nicht 
 - Nutzerdaten (Titel, Texte, Medien-Links) nie ungeprüft in `innerHTML` schreiben: Text mit `escapeHtml`, URLs mit `isSafeMediaSrc` prüfen und mit `escapeAttr` ausgeben.
 - Die Content-Security-Policy steht als `<meta>` im `<head>` von `index.html`. Neue externe Hosts (Bilder, Videos, Skripte) müssen dort ausdrücklich erlaubt werden.
 
+## Persönliche Daten (nur auf dem Gerät)
+
+Favoriten, "Gelernt", Falsch-Liste und **Notizen** (`lernapp_notes_v1`, pro Eintrag-ID, unter jeder Erklärung) liegen im `localStorage` des jeweiligen Geräts. Sie stehen nicht in `data.json` und nicht im Backup. Notizen werden automatisch gespeichert, leere nicht angelegt, und nur über `escapeHtml` ausgegeben.
+
 ## Neue Inhalte hinzufügen (Videos, Einträge)
 
 Gibt der Nutzer neue Videos oder Infos, alles selbstständig erledigen. Nur das Mergen braucht seine Freigabe ("merge").

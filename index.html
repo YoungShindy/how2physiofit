@@ -360,6 +360,9 @@
     line-height: 1.5;
     margin-bottom: 6px;
   }
+  .detail section.notes { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--divider); }
+  .detail section.notes textarea { font-size: 15px; line-height: 1.5; min-height: 110px; }
+  .detail section.notes .notes-hint { margin-top: 6px; }
 
   /* Leerer Zustand ------------------------------------------- */
   .empty {
@@ -962,6 +965,33 @@ function saveWrong(){ try { localStorage.setItem(WRONG_KEY, JSON.stringify(wrong
 function markWrong(id){ if (!wrongList.includes(id)) { wrongList = wrongList.concat(id); saveWrong(); } }
 function markRight(id){ if (wrongList.includes(id)) { wrongList = wrongList.filter(x=>x!==id); saveWrong(); } }
 
+/* ================= Persönliche Notizen ================= */
+
+// Notizen gehören dem Nutzer, nicht den Inhalten: pro Eintrag-ID nur auf diesem Gerät gespeichert
+// (kein Teil von data.json oder des Backups). Leere Notizen werden nicht gespeichert.
+const NOTES_KEY = 'lernapp_notes_v1';
+let notes = Object.create(null);
+function loadNotes(){
+  try {
+    const raw = localStorage.getItem(NOTES_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) return Object.assign(Object.create(null), parsed);
+  } catch (e) { /* ignore */ }
+  return Object.create(null);
+}
+function getNote(id){ return typeof notes[id] === 'string' ? notes[id] : ''; }
+function setNote(id, text){
+  if (text.trim() === '') delete notes[id]; else notes[id] = text;
+  try {
+    if (Object.keys(notes).length === 0) localStorage.removeItem(NOTES_KEY);
+    else localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+    return true;
+  } catch (e) { return false; }
+}
+let flushNote = null; // speichert eine noch nicht gespeicherte Eingabe sofort (z.B. beim Schließen der App)
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && flushNote) flushNote(); });
+window.addEventListener('pagehide', () => { if (flushNote) flushNote(); });
+
 /* ================= Prüfungsmodus ================= */
 
 let quiz = null;
@@ -1419,6 +1449,11 @@ function renderDetail(node){
         </section>
       `).join('')}
       ${sections.length === 0 ? '<div class="empty">Noch keine Inhalte hinterlegt.</div>' : ''}
+      <section class="notes">
+        <h3>Meine Notizen</h3>
+        <textarea id="noteInput" class="modal-input" rows="5" maxlength="10000" aria-label="Meine Notizen" placeholder="Eigene Notizen zu dieser Technik … (freiwillig)">${escapeHtml(getNote(node.id))}</textarea>
+        <div class="empty-hint notes-hint" id="noteHint">Wird automatisch auf diesem Gerät gespeichert.</div>
+      </section>
     </div>
   `;
 }
@@ -1595,6 +1630,24 @@ function bindDetailActions(node){
     learnedBtn.textContent = isLearned(node.id) ? '✓ Gelernt' : 'Als gelernt markieren';
     learnedBtn.classList.toggle('active', isLearned(node.id));
   });
+  const noteInput = document.getElementById('noteInput');
+  if (noteInput) {
+    const hint = document.getElementById('noteHint');
+    let timer = null;
+    const persist = () => {
+      clearTimeout(timer);
+      hint.textContent = setNote(node.id, noteInput.value)
+        ? 'Gespeichert auf diesem Gerät.'
+        : 'Speichern nicht möglich – der Browser-Speicher ist evtl. voll.';
+    };
+    noteInput.addEventListener('input', () => {
+      hint.textContent = 'Speichert …';
+      clearTimeout(timer);
+      timer = setTimeout(persist, 300);
+    });
+    noteInput.addEventListener('blur', persist);
+    flushNote = persist;
+  }
 }
 
 function deleteNode(node, parent){
@@ -2349,6 +2402,7 @@ async function init(){
   favorites = loadFavorites();
   learned = loadLearned();
   wrongList = loadWrong();
+  notes = loadNotes();
 
   const storedRole = getStoredRole();
   if (storedRole) {
