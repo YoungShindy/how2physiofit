@@ -44,6 +44,14 @@ function pathToFirstEntry(nodes, trail = []) {
   return null;
 }
 
+// Alle Titel-Pfade [Fach, Ordner…, Eintrag] zu Einträgen mit Inhalt
+function allEntryPaths(nodes, trail = []) {
+  return nodes.flatMap((n) => {
+    const here = [...trail, n.title];
+    return [...(n.detail ? [here] : []), ...allEntryPaths(n.children ?? [], here)];
+  });
+}
+
 const playwright = loadPlaywright();
 const skip = playwright ? false : 'Playwright nicht gefunden (npm i -D playwright)';
 
@@ -118,7 +126,7 @@ test('Navigation: Fach → Eintrag öffnen → zurück', { skip }, async () => {
     }
     await page.locator('#main .row', { hasText: entry }).first().click();
     await page.waitForSelector('#main .detail h2');
-    assert.ok(await page.locator('#main .detail section').count() > 0, 'Eintrag ohne Abschnitte');
+    assert.ok(await page.locator('#main .detail section:not(.notes)').count() > 0, 'Eintrag ohne Abschnitte');
 
     // Favorit und "gelernt" umschalten
     await page.click('#favToggleBtn');
@@ -335,5 +343,122 @@ test('Alle Einträge aus data.json rendern ohne CSP-Verletzung und ohne abgelehn
     assert.deepEqual(result.csp, [], 'CSP-Verletzungen');
     // Netzwerkfehler (z.B. YouTube im Sandbox-Netz) sind hier irrelevant, JS-/CSP-Fehler nicht
     assert.deepEqual(errors.filter((e) => /pageerror|Content Security Policy|Refused to/i.test(e)), []);
+  } finally { await context.close(); }
+});
+
+// ---------- Persönliche Notizen ----------
+
+// Öffnet einen Eintrag über die Oberfläche; `path` = Titel von Fach bis Eintrag
+async function openEntry(page, path) {
+  const [subject, ...rest] = path;
+  await page.locator('#main .card', { hasText: subject }).first().click();
+  await page.waitForSelector('#main .row, #main .empty');
+  for (const title of rest) {
+    await page.locator('#main .row', { hasText: title }).first().click();
+    await page.waitForSelector('#main .row, #main .detail h2, #main .empty');
+  }
+  await page.waitForSelector('#main .detail h2');
+  assert.equal(await page.locator('#main .detail h2').textContent(), path.at(-1), 'falschen Eintrag geöffnet');
+}
+const goTop = async (page) => { while (await page.locator('#backBtn.visible').count()) await page.click('#backBtn'); };
+const storedNotes = (page) => page.evaluate(() => localStorage.getItem('lernapp_notes_v1'));
+const waitSaved = (page) => page.waitForFunction(() => document.getElementById('noteHint').textContent.startsWith('Gespeichert'));
+
+test('Notizen: freiwillig, automatisch gespeichert, pro Eintrag getrennt, nach Neuladen erhalten', { skip }, async () => {
+  const paths = allEntryPaths(data.subjects);
+  const first = paths[0], second = paths.at(-1);
+  assert.notEqual(first.at(-1), second.at(-1), 'Testdaten brauchen zwei verschiedene Einträge');
+  const { context, page, errors } = await openApp();
+  try {
+    assert.equal(await storedNotes(page), null, 'vor jeder Eingabe darf nichts gespeichert sein');
+    await openEntry(page, first);
+
+    const note = page.locator('#noteInput');
+    assert.equal(await note.count(), 1, 'Notizfeld fehlt');
+    assert.equal(await note.inputValue(), '');
+    assert.match(await note.getAttribute('placeholder'), /freiwillig/);
+    assert.equal(await note.getAttribute('required'), null, 'Notizfeld darf kein Pflichtfeld sein');
+
+    // Hineintippen und wieder verlassen ohne Text: es wird nichts gespeichert ("nichts muss")
+    await note.focus(); await note.blur();
+    await page.waitForFunction(() => document.getElementById('noteHint').textContent.startsWith('Gespeichert'));
+    assert.equal(await storedNotes(page), null, 'leere Notiz wurde gespeichert');
+
+    // Schreiben: wird automatisch gespeichert
+    const text = 'Zeile 1\nZeile 2 mit Umlauten äöü & <b>Zeichen</b>';
+    await note.fill(text);
+    await waitSaved(page);
+    assert.deepEqual(Object.values(JSON.parse(await storedNotes(page))), [text]);
+
+    // Neuladen: Notiz ist wieder da
+    await page.reload(); await page.waitForSelector('#main .card');
+    await openEntry(page, first);
+    assert.equal(await page.locator('#noteInput').inputValue(), text, 'Notiz nach Neuladen weg');
+
+    // Anderer Eintrag: eigenes, leeres Feld
+    await goTop(page);
+    await openEntry(page, second);
+    assert.equal(await page.locator('#noteInput').inputValue(), '', 'Notiz erscheint bei einem anderen Eintrag');
+
+    // Text löschen: Eintrag wird aus dem Speicher entfernt
+    await goTop(page);
+    await openEntry(page, first);
+    await page.locator('#noteInput').fill('');
+    await page.locator('#noteInput').blur();
+    await waitSaved(page);
+    assert.equal(await storedNotes(page), null, 'gelöschte Notiz blieb im Speicher');
+
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
+test('Notizen: Eingaben werden nie als HTML ausgeführt', { skip }, async () => {
+  const entry = allEntryPaths(data.subjects)[0];
+  const evil = '</textarea><img src=x onerror="window.__xss=1"><script>window.__xss=2</script>';
+  const { context, page, errors } = await openApp();
+  try {
+    await openEntry(page, entry);
+    await page.locator('#noteInput').fill(evil);
+    await waitSaved(page);
+    await page.reload(); await page.waitForSelector('#main .card');
+    await openEntry(page, entry);
+    assert.equal(await page.locator('#noteInput').inputValue(), evil, 'Text muss unverändert als Text erscheinen');
+    const r = await page.evaluate(() => ({
+      fired: window.__xss ?? null,
+      handlers: [...document.querySelectorAll('#main *')].filter((el) => [...el.attributes].some((a) => /^on/i.test(a.name))).length,
+      scripts: document.querySelectorAll('#main script').length,
+      textareas: document.querySelectorAll('#main textarea').length,
+    }));
+    assert.deepEqual(r, { fired: null, handlers: 0, scripts: 0, textareas: 1 });
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
+test('Notizen: Feld erscheint auch in der Gebiets- und Favoritenansicht', { skip }, async () => {
+  const withRegion = (function find(nodes) {
+    for (const n of nodes) {
+      if (n.detail?.regions?.length) return n;
+      const hit = find(n.children ?? []);
+      if (hit) return hit;
+    }
+  })(data.subjects);
+  const regionTitle = data.regions.find((r) => r.id === withRegion.detail.regions[0]).title;
+  const { context, page, errors } = await openApp();
+  try {
+    // Gebietsansicht
+    await page.click('#tabRegionsBtn'); await page.waitForSelector('#main .card');
+    await page.locator('#main .card', { hasText: regionTitle }).first().click();
+    await page.locator('#main .row', { hasText: withRegion.title }).first().click();
+    await page.waitForSelector('#main .detail h2');
+    assert.equal(await page.locator('#noteInput').count(), 1, 'Notizfeld fehlt in der Gebietsansicht');
+
+    // Favoritenansicht
+    await page.click('#favToggleBtn');
+    await goTop(page);
+    await page.click('#tabFavoritesBtn');
+    await page.locator('#main .row', { hasText: withRegion.title }).first().click();
+    await page.waitForSelector('#main .detail h2');
+    assert.equal(await page.locator('#noteInput').count(), 1, 'Notizfeld fehlt in der Favoritenansicht');
+    assert.deepEqual(errors, []);
   } finally { await context.close(); }
 });
